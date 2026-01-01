@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { GraduationCap, Upload, CheckCircle, Clock, X, Camera } from 'lucide-react'
-import { studentVerificationAPI } from '@/lib/api'
+import { GraduationCap, Upload, CheckCircle, Clock, X, Camera, Loader2 } from 'lucide-react'
+import { studentVerificationAPI, uploadAPI } from '@/lib/api'
 import { useLanguageStore } from '@/lib/store'
 import { useTranslation } from '@/lib/i18n'
 import Header from '@/components/layout/Header'
@@ -26,6 +26,7 @@ export default function StudentDiscountPage() {
     studentIdImage: '',
     additionalImage: ''
   })
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   const getText = (key: string) => {
     const texts: Record<string, Record<string, string>> = {
@@ -137,10 +138,26 @@ export default function StudentDiscountPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Convert to base64
+    // Convert to base64 first
     const reader = new FileReader()
-    reader.onloadend = () => {
-      setFormData(prev => ({ ...prev, [field]: reader.result as string }))
+    reader.onloadend = async () => {
+      const base64Image = reader.result as string
+      setUploadingImage(true)
+      
+      try {
+        // Upload to Cloudinary
+        const response = await uploadAPI.uploadStudentId(base64Image)
+        const imageUrl = response.data.data.url
+        setFormData(prev => ({ ...prev, [field]: imageUrl }))
+        toast.success(language === 'ja' ? '画像がアップロードされました' : 'Đã tải ảnh lên thành công!')
+      } catch (error) {
+        console.error('Upload error:', error)
+        // Fallback to base64 if Cloudinary fails
+        setFormData(prev => ({ ...prev, [field]: base64Image }))
+        toast.error(language === 'ja' ? '画像のアップロードに失敗しました' : 'Tải ảnh lên thất bại, sử dụng ảnh gốc')
+      } finally {
+        setUploadingImage(false)
+      }
     }
     reader.readAsDataURL(file)
   }
@@ -281,7 +298,12 @@ export default function StudentDiscountPage() {
                 <p className="text-sm text-gray-500 mb-3">{getText('uploadNote')}</p>
                 
                 <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-500 transition-colors">
-                  {formData.studentIdImage ? (
+                  {uploadingImage ? (
+                    <div className="flex flex-col items-center justify-center py-4">
+                      <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-3" />
+                      <span className="text-gray-600">{language === 'ja' ? 'アップロード中...' : 'Đang tải lên...'}</span>
+                    </div>
+                  ) : formData.studentIdImage ? (
                     <div className="relative">
                       <img
                         src={formData.studentIdImage}

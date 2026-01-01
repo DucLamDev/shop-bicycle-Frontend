@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm, useWatch } from 'react-hook-form'
 import { CheckCircle, QrCode, Copy, Check, Clock, Calendar, CreditCard, Truck, Gift, Crown, Printer, MapPin, Store, Package } from 'lucide-react'
@@ -102,7 +102,7 @@ const TIME_SLOTS = [
   { value: 'anytime', label: 'Bất kỳ lúc nào', icon: '📦' },
 ]
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { items, clearCart, getTotalPrice } = useCartStore()
@@ -964,5 +964,27 @@ export default function CheckoutPage() {
 
       <Footer />
     </div>
+  )
+}
+
+function CheckoutLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        </div>
+      </div>
+      <Footer />
+    </div>
+  )
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<CheckoutLoading />}>
+      <CheckoutContent />
+    </Suspense>
   )
 }

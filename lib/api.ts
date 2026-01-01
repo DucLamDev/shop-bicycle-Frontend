@@ -1,5 +1,6 @@
 import axios from 'axios'
 
+// Create axios instance
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 
 const api = axios.create({
@@ -212,6 +213,15 @@ export const chatAPI = {
   sendAdminMessage: (chatId: string, data: any) => api.post(`/chat/${chatId}/admin-message`, data),
   closeChat: (chatId: string) => api.put(`/chat/${chatId}/close`),
   getUnreadStats: () => api.get('/chat/stats/unread'),
+}
+
+export const uploadAPI = {
+  uploadImage: (image: string, folder?: string) => 
+    api.post('/upload/image', { image, folder }),
+  uploadProductImages: (images: string[]) => 
+    api.post('/upload/product-images', { images }),
+  uploadStudentId: (image: string) => 
+    api.post('/upload/student-id', { image }),
 }
 
 export default api

@@ -1,18 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Save, Upload, X } from 'lucide-react'
+import { ArrowLeft, Save, Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { useAuthStore } from '@/lib/store'
-import { productsAPI } from '@/lib/api'
+import { productsAPI, uploadAPI } from '@/lib/api'
 import AdminSidebar from '@/components/admin/Sidebar'
 import toast from 'react-hot-toast'
 
 export default function NewProductPage() {
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
+  const [isClient, setIsClient] = useState(false)
+  
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
   const [loading, setLoading] = useState(false)
+  const [uploadingImages, setUploadingImages] = useState<number[]>([])
   const [formData, setFormData] = useState({
     name: '',
     brand: '',
@@ -101,9 +107,52 @@ export default function NewProductPage() {
     setFormData({ ...formData, replacedParts: newParts })
   }
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onloadend = async () => {
+      const base64Image = reader.result as string
+      setUploadingImages(prev => [...prev, index])
+      
+      try {
+        const response = await uploadAPI.uploadProductImages([base64Image])
+        const imageUrl = response.data.data.images[0]
+        const newImages = [...formData.images]
+        newImages[index] = imageUrl
+        setFormData({ ...formData, images: newImages })
+        toast.success('Đã tải ảnh lên thành công!')
+      } catch (error) {
+        console.error('Upload error:', error)
+        toast.error('Tải ảnh lên thất bại')
+      } finally {
+        setUploadingImages(prev => prev.filter(i => i !== index))
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  useEffect(() => {
+    if (isClient && (!isAuthenticated || user?.role !== 'admin')) {
+      router.push('/login')
+    }
+  }, [isClient, isAuthenticated, user, router])
+
+  if (!isClient) {
+    return (
+      <div className="flex min-h-screen bg-gray-900 items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    )
+  }
+
   if (!isAuthenticated || user?.role !== 'admin') {
-    router.push('/login')
-    return null
+    return (
+      <div className="flex min-h-screen bg-gray-900 items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    )
   }
 
   return (
@@ -413,33 +462,81 @@ export default function NewProductPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    URL Hình ảnh
+                    Hình ảnh sản phẩm
                   </label>
-                  {formData.images.map((img, index) => (
-                    <div key={index} className="flex gap-2 mb-2">
-                      <input
-                        type="url"
-                        value={img}
-                        onChange={(e) => updateImage(index, e.target.value)}
-                        placeholder="https://..."
-                        className="flex-1 px-4 py-3 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="p-3 text-red-400 hover:bg-gray-600 rounded-lg"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={addImage}
-                    className="text-blue-400 hover:text-blue-300 text-sm font-medium"
-                  >
-                    + Thêm hình ảnh
-                  </button>
+                  <p className="text-gray-400 text-xs mb-3">Tải ảnh lên hoặc nhập URL trực tiếp</p>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                    {formData.images.map((img, index) => (
+                      <div key={index} className="relative">
+                        {uploadingImages.includes(index) ? (
+                          <div className="w-full h-32 bg-gray-700 rounded-lg flex items-center justify-center">
+                            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                          </div>
+                        ) : img && img.startsWith('http') ? (
+                          <div className="relative group">
+                            <img
+                              src={img}
+                              alt={`Product ${index + 1}`}
+                              className="w-full h-32 object-cover rounded-lg"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="w-full h-32 bg-gray-700 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-600 transition-colors border-2 border-dashed border-gray-500">
+                            <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                            <span className="text-gray-400 text-xs">Tải ảnh lên</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleImageUpload(e, index)}
+                              className="hidden"
+                            />
+                          </label>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={addImage}
+                      className="text-blue-400 hover:text-blue-300 text-sm font-medium"
+                    >
+                      + Thêm ô ảnh
+                    </button>
+                  </div>
+                  
+                  <div className="mt-4 pt-4 border-t border-gray-700">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Hoặc nhập URL ảnh trực tiếp
+                    </label>
+                    {formData.images.map((img, index) => (
+                      <div key={`url-${index}`} className="flex gap-2 mb-2">
+                        <input
+                          type="url"
+                          value={img}
+                          onChange={(e) => updateImage(index, e.target.value)}
+                          placeholder="https://..."
+                          className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="p-2 text-red-400 hover:bg-gray-600 rounded-lg"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </motion.div>
