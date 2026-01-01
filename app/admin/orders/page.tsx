@@ -1,0 +1,251 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
+import { Eye, Search, Filter, Download, Trash2, Edit, Printer } from 'lucide-react'
+import { useAuthStore } from '@/lib/store'
+import { ordersAPI, invoiceAPI } from '@/lib/api'
+import { formatCurrency } from '@/lib/utils'
+import AdminSidebar from '@/components/admin/Sidebar'
+import toast from 'react-hot-toast'
+
+export default function AdminOrdersPage() {
+  const router = useRouter()
+  const { user, isAuthenticated } = useAuthStore()
+  const [orders, setOrders] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState('all')
+
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== 'admin') {
+      router.push('/login')
+      return
+    }
+    fetchOrders()
+  }, [isAuthenticated, user])
+
+  const fetchOrders = async () => {
+    try {
+      const response = await ordersAPI.getAll()
+      setOrders(response.data.data)
+    } catch (error) {
+      toast.error('Không thể tải danh sách đơn hàng')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      await ordersAPI.updateStatus(orderId, { orderStatus: newStatus })
+      toast.success('Đã cập nhật trạng thái đơn hàng')
+      fetchOrders()
+    } catch (error) {
+      toast.error('Không thể cập nhật trạng thái')
+    }
+  }
+
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!confirm('Bạn có chắc muốn xóa đơn hàng này?')) return
+    try {
+      await ordersAPI.delete(orderId)
+      toast.success('Đã xóa đơn hàng')
+      fetchOrders()
+    } catch (error) {
+      toast.error('Không thể xóa đơn hàng')
+    }
+  }
+
+  const handlePrintInvoice = (orderId: string) => {
+    window.open(invoiceAPI.getInvoiceHtml(orderId), '_blank')
+  }
+
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch = order._id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.customer?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.customer?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = filterStatus === 'all' || order.orderStatus === filterStatus
+    return matchesSearch && matchesStatus
+  })
+
+  const getStatusColor = (status: string) => {
+    switch(status) {
+      case 'pending': return 'bg-yellow-500/20 text-yellow-400'
+      case 'confirmed': return 'bg-blue-500/20 text-blue-400'
+      case 'processing': return 'bg-purple-500/20 text-purple-400'
+      case 'shipping': return 'bg-cyan-500/20 text-cyan-400'
+      case 'delivered': return 'bg-green-500/20 text-green-400'
+      case 'cancelled': return 'bg-red-500/20 text-red-400'
+      default: return 'bg-gray-500/20 text-gray-400'
+    }
+  }
+
+  const getStatusText = (status: string) => {
+    switch(status) {
+      case 'pending': return 'Chờ xác nhận'
+      case 'confirmed': return 'Đã xác nhận'
+      case 'processing': return 'Đang xử lý'
+      case 'shipping': return 'Đang giao'
+      case 'delivered': return 'Đã giao'
+      case 'cancelled': return 'Đã hủy'
+      default: return status
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen bg-gray-900">
+        <AdminSidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-white text-xl">Đang tải...</div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex min-h-screen bg-gray-900">
+      <AdminSidebar />
+      
+      <div className="flex-1">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-2">Quản lý đơn hàng</h1>
+              <p className="text-gray-400">Tổng số: {filteredOrders.length} đơn hàng</p>
+            </div>
+            <button
+              className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+            >
+              <Download className="w-5 h-5" />
+              Xuất Excel
+            </button>
+          </div>
+
+          <div className="bg-gray-800 rounded-lg p-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Tìm theo mã đơn hoặc email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                />
+              </div>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-4 py-3 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+              >
+                <option value="all">Tất cả trạng thái</option>
+                <option value="pending">Chờ xác nhận</option>
+                <option value="confirmed">Đã xác nhận</option>
+                <option value="processing">Đang xử lý</option>
+                <option value="shipping">Đang giao</option>
+                <option value="delivered">Đã giao</option>
+                <option value="cancelled">Đã hủy</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="bg-gray-800 rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-700">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-white font-semibold">Mã đơn</th>
+                    <th className="px-6 py-4 text-left text-white font-semibold">Khách hàng</th>
+                    <th className="px-6 py-4 text-left text-white font-semibold">Sản phẩm</th>
+                    <th className="px-6 py-4 text-left text-white font-semibold">Tổng tiền</th>
+                    <th className="px-6 py-4 text-left text-white font-semibold">Trạng thái</th>
+                    <th className="px-6 py-4 text-left text-white font-semibold">Ngày đặt</th>
+                    <th className="px-6 py-4 text-right text-white font-semibold">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                  {filteredOrders.map((order) => (
+                    <motion.tr
+                      key={order._id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="hover:bg-gray-700/50 transition-colors"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="text-white font-mono text-sm">
+                          #{order.orderNumber || order._id?.slice(-8).toUpperCase()}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-white">{order.customer?.name || 'Khách hàng'}</div>
+                        <div className="text-gray-400 text-sm">{order.customer?.email || order.customer?.phone}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-white">{order.items?.length || 0} sản phẩm</div>
+                      </td>
+                      <td className="px-6 py-4 text-white font-semibold">
+                        {formatCurrency(order.totalAmount || 0)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <select
+                          value={order.orderStatus || 'pending'}
+                          onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                          className={`px-3 py-1 rounded-full text-sm outline-none cursor-pointer ${getStatusColor(order.orderStatus)}`}
+                        >
+                          <option value="pending">Chờ xác nhận</option>
+                          <option value="confirmed">Đã xác nhận</option>
+                          <option value="processing">Đang xử lý</option>
+                          <option value="shipping">Đang giao</option>
+                          <option value="delivered">Đã giao</option>
+                          <option value="cancelled">Đã hủy</option>
+                        </select>
+                      </td>
+                      <td className="px-6 py-4 text-gray-400 text-sm">
+                        {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handlePrintInvoice(order._id)}
+                            className="p-2 text-green-400 hover:bg-gray-600 rounded-lg transition-colors"
+                            title="In hóa đơn"
+                          >
+                            <Printer className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => router.push(`/admin/orders/${order._id}`)}
+                            className="p-2 text-blue-400 hover:bg-gray-600 rounded-lg transition-colors"
+                            title="Xem chi tiết"
+                          >
+                            <Eye className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteOrder(order._id)}
+                            className="p-2 text-red-400 hover:bg-gray-600 rounded-lg transition-colors"
+                            title="Xóa"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {filteredOrders.length === 0 && (
+              <div className="text-center py-12 text-gray-400">
+                Không tìm thấy đơn hàng nào
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
