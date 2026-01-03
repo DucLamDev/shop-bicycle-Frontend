@@ -4,7 +4,112 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Gift, X, Sparkles, Copy, Check, Star, Zap, Trophy, PartyPopper } from 'lucide-react'
 import { miniGameAPI } from '@/lib/api'
+import { useLanguageStore } from '@/lib/store'
 import toast from 'react-hot-toast'
+
+// i18n translations for MiniGame
+const translations: Record<string, Record<string, string>> = {
+  title: {
+    vi: 'VÒNG QUAY MAY MẮN',
+    ja: 'ラッキースピン',
+    en: 'LUCKY SPIN'
+  },
+  subtitle: {
+    vi: 'Quay ngay để nhận mã giảm giá',
+    ja: '回してクーポンをゲット',
+    en: 'Spin to get discount codes'
+  },
+  realDiscount: {
+    vi: 'THẬT 100%',
+    ja: '本物100%',
+    en: '100% REAL'
+  },
+  freeSpinDaily: {
+    vi: 'Mỗi ngày bạn được quay 1 lần miễn phí',
+    ja: '毎日1回無料で回せます',
+    en: 'One free spin per day'
+  },
+  spinNow: {
+    vi: 'QUAY NGAY - MIỄN PHÍ!',
+    ja: '今すぐ回す - 無料!',
+    en: 'SPIN NOW - FREE!'
+  },
+  spinning: {
+    vi: 'ĐANG QUAY...',
+    ja: '回転中...',
+    en: 'SPINNING...'
+  },
+  seeTomorrow: {
+    vi: 'HẸN GẶP LẠI NGÀY MAI!',
+    ja: 'また明日!',
+    en: 'SEE YOU TOMORROW!'
+  },
+  congratulations: {
+    vi: 'CHÚC MỪNG BẠN!',
+    ja: 'おめでとうございます!',
+    en: 'CONGRATULATIONS!'
+  },
+  yourCoupon: {
+    vi: 'MÃ GIẢM GIÁ CỦA BẠN',
+    ja: 'あなたのクーポン',
+    en: 'YOUR COUPON CODE'
+  },
+  yourPrize: {
+    vi: 'PHẦN THƯỞNG CỦA BẠN',
+    ja: 'あなたの賞品',
+    en: 'YOUR PRIZE'
+  },
+  validUntil: {
+    vi: 'Có hiệu lực đến',
+    ja: '有効期限',
+    en: 'Valid until'
+  },
+  codeSaved: {
+    vi: 'Mã đã được lưu vào hệ thống, sử dụng khi thanh toán!',
+    ja: 'コードがシステムに保存されました。お支払い時にご使用ください!',
+    en: 'Code saved! Use it at checkout!'
+  },
+  contactStore: {
+    vi: 'Liên hệ cửa hàng để nhận quà khi mua hàng',
+    ja: 'ご購入時に店舗で景品をお受け取りください',
+    en: 'Contact store to receive gift with purchase'
+  },
+  tryAgain: {
+    vi: 'Chúc may mắn lần sau!',
+    ja: 'また次回!',
+    en: 'Better luck next time!'
+  },
+  comeBackTomorrow: {
+    vi: 'Quay lại vào ngày mai để thử vận may nhé!',
+    ja: '明日また挑戦してください!',
+    en: 'Come back tomorrow to try again!'
+  },
+  tip: {
+    vi: 'Mẹo: Mã giảm giá có thể áp dụng cho tất cả sản phẩm',
+    ja: 'ヒント: クーポンは全商品に使用できます',
+    en: 'Tip: Coupon can be applied to all products'
+  },
+  floatingText: {
+    vi: 'Quay số trúng thưởng!',
+    ja: '回して当てよう!',
+    en: 'Spin to win!'
+  },
+  copied: {
+    vi: 'Đã sao chép mã giảm giá!',
+    ja: 'コードをコピーしました!',
+    en: 'Coupon code copied!'
+  },
+  wonPrize: {
+    vi: 'Chúc mừng bạn đã trúng thưởng!',
+    ja: 'おめでとうございます!当選しました!',
+    en: 'Congratulations! You won!'
+  },
+  error: {
+    vi: 'Có lỗi xảy ra, vui lòng thử lại!',
+    ja: 'エラーが発生しました。もう一度お試しください。',
+    en: 'An error occurred, please try again!'
+  }
+}
 
 interface Prize {
   id: number
@@ -100,6 +205,9 @@ function GlowingOrbs() {
 }
 
 export default function MiniGame() {
+  const { language } = useLanguageStore()
+  const t = (key: string) => translations[key]?.[language] || translations[key]?.vi || key
+  
   const [isOpen, setIsOpen] = useState(false)
   const [isSpinning, setIsSpinning] = useState(false)
   const [rotation, setRotation] = useState(0)
@@ -169,16 +277,17 @@ export default function MiniGame() {
         setHasPlayed(true)
         localStorage.setItem('miniGameLastPlayed', new Date().toISOString())
         
-        if (spinResult.coupon) {
+        // Show confetti for any winning prize (not 'none' type)
+        if (spinResult.prize.type !== 'none') {
           setShowConfetti(true)
-          toast.success('🎉 Chúc mừng bạn đã trúng thưởng!')
+          toast.success(`🎉 ${t('wonPrize')}`)
           setTimeout(() => setShowConfetti(false), 4000)
         }
       }, 5500)
     } catch (error) {
       console.error('Error spinning wheel:', error)
       setIsSpinning(false)
-      toast.error('Có lỗi xảy ra, vui lòng thử lại!')
+      toast.error(t('error'))
     }
   }
 
@@ -186,10 +295,10 @@ export default function MiniGame() {
     if (result?.coupon?.code) {
       navigator.clipboard.writeText(result.coupon.code)
       setCopied(true)
-      toast.success('Đã sao chép mã giảm giá!')
+      toast.success(t('copied'))
       setTimeout(() => setCopied(false), 2000)
     }
-  }, [result])
+  }, [result, t])
 
   const segmentAngle = prizes.length > 0 ? 360 / prizes.length : 45
 
@@ -240,7 +349,7 @@ export default function MiniGame() {
             animate={{ y: 0 }}
           >
             <Sparkles className="w-3 h-3 inline mr-1 text-yellow-400" />
-            Quay số trúng thưởng!
+            {t('floatingText')}
           </motion.div>
         </div>
       </motion.button>
@@ -305,16 +414,16 @@ export default function MiniGame() {
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <Zap className="w-6 h-6 text-yellow-400" />
                     <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-orange-400 to-pink-500">
-                      VÒNG QUAY MAY MẮN
+                      {t('title')}
                     </h2>
                     <Zap className="w-6 h-6 text-yellow-400" />
                   </div>
                 </motion.div>
                 <p className="text-purple-200 text-sm">
-                  🎯 Quay ngay để nhận mã giảm giá <span className="text-yellow-400 font-bold">THẬT 100%</span>!
+                  🎯 {t('subtitle')} <span className="text-yellow-400 font-bold">{t('realDiscount')}</span>!
                 </p>
                 <p className="text-purple-300/70 text-xs mt-1">
-                  Mỗi ngày bạn được quay 1 lần miễn phí
+                  {t('freeSpinDaily')}
                 </p>
               </div>
 
@@ -464,17 +573,17 @@ export default function MiniGame() {
                           >
                             🎡
                           </motion.span>
-                          ĐANG QUAY...
+                          {t('spinning')}
                         </>
                       ) : hasPlayed ? (
                         <>
                           <span className="text-2xl">⏰</span>
-                          HẸN GẶP LẠI NGÀY MAI!
+                          {t('seeTomorrow')}
                         </>
                       ) : (
                         <>
                           <span className="text-2xl">🎰</span>
-                          QUAY NGAY - MIỄN PHÍ!
+                          {t('spinNow')}
                           <span className="text-2xl">🎰</span>
                         </>
                       )}
@@ -486,7 +595,43 @@ export default function MiniGame() {
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     className="bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-sm rounded-2xl p-6 text-center border border-white/20"
                   >
-                    {result.coupon ? (
+                    {result.prize.type === 'none' ? (
+                      /* No prize - try again */
+                      <>
+                        <div className="text-4xl mb-3">🍀</div>
+                        <h3 className="text-xl font-bold text-white mb-2">{t('tryAgain')}</h3>
+                        <p className="text-white/70 text-sm">{t('comeBackTomorrow')}</p>
+                      </>
+                    ) : result.prize.type === 'gift' ? (
+                      /* Physical gift prize */
+                      <>
+                        <motion.div 
+                          className="text-5xl mb-3"
+                          animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
+                          transition={{ duration: 0.5 }}
+                        >
+                          🎁
+                        </motion.div>
+                        <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-400 mb-2">
+                          {t('congratulations')}
+                        </h3>
+                        <p className="text-white/90 mb-4">{result.message}</p>
+                        
+                        <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl p-4 border-2 border-dashed border-purple-400/50">
+                          <p className="text-purple-300 text-sm mb-2 flex items-center justify-center gap-2">
+                            <Trophy className="w-4 h-4" />
+                            {t('yourPrize')}
+                          </p>
+                          <div className="text-2xl font-bold text-white">
+                            {language === 'ja' ? result.prize.name : result.prize.nameVi}
+                          </div>
+                          <p className="text-white/60 text-xs mt-3">
+                            🏪 {t('contactStore')}
+                          </p>
+                        </div>
+                      </>
+                    ) : result.coupon ? (
+                      /* Discount/Freeship coupon prize */
                       <>
                         <motion.div 
                           className="text-5xl mb-3"
@@ -496,7 +641,7 @@ export default function MiniGame() {
                           🎊
                         </motion.div>
                         <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-400 mb-2">
-                          CHÚC MỪNG BẠN!
+                          {t('congratulations')}
                         </h3>
                         <p className="text-white/90 mb-4">{result.message}</p>
                         
@@ -504,7 +649,7 @@ export default function MiniGame() {
                         <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl p-4 border-2 border-dashed border-yellow-400/50">
                           <p className="text-yellow-300 text-sm mb-2 flex items-center justify-center gap-2">
                             <Trophy className="w-4 h-4" />
-                            MÃ GIẢM GIÁ CỦA BẠN
+                            {t('yourCoupon')}
                           </p>
                           <div className="flex items-center justify-center gap-3">
                             <code className="text-3xl font-mono font-black text-white tracking-wider bg-black/30 px-4 py-2 rounded-lg">
@@ -524,20 +669,21 @@ export default function MiniGame() {
                             </motion.button>
                           </div>
                           <p className="text-white/60 text-xs mt-3 flex items-center justify-center gap-1">
-                            ⏰ Có hiệu lực đến: {new Date(result.coupon.validUntil).toLocaleDateString('vi-VN')}
+                            ⏰ {t('validUntil')}: {new Date(result.coupon.validUntil).toLocaleDateString(language === 'ja' ? 'ja-JP' : 'vi-VN')}
                           </p>
                         </div>
                         
                         <p className="text-green-400 text-sm mt-4 flex items-center justify-center gap-2">
                           <Check className="w-4 h-4" />
-                          Mã đã được lưu vào hệ thống, sử dụng khi thanh toán!
+                          {t('codeSaved')}
                         </p>
                       </>
                     ) : (
+                      /* Fallback */
                       <>
                         <div className="text-4xl mb-3">🍀</div>
-                        <h3 className="text-xl font-bold text-white mb-2">Chúc may mắn lần sau!</h3>
-                        <p className="text-white/70 text-sm">Quay lại vào ngày mai để thử vận may nhé!</p>
+                        <h3 className="text-xl font-bold text-white mb-2">{t('tryAgain')}</h3>
+                        <p className="text-white/70 text-sm">{t('comeBackTomorrow')}</p>
                       </>
                     )}
                   </motion.div>
@@ -547,7 +693,7 @@ export default function MiniGame() {
               {/* Footer info */}
               <div className="mt-4 text-center">
                 <p className="text-purple-300/60 text-xs">
-                  💡 Mẹo: Mã giảm giá có thể áp dụng cho tất cả sản phẩm
+                  💡 {t('tip')}
                 </p>
               </div>
             </motion.div>

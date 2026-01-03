@@ -54,11 +54,14 @@ export const initializeGoogleSignIn = async (
   onError: (error: any) => void
 ) => {
   try {
-    await loadGoogleScript();
-
-    if (!GOOGLE_CLIENT_ID) {
-      throw new Error('Google Client ID not configured');
+    // Check if Google Client ID is configured
+    if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === 'your-google-client-id.apps.googleusercontent.com') {
+      console.warn('Google OAuth: Client ID not configured. Set NEXT_PUBLIC_GOOGLE_CLIENT_ID in .env file.');
+      // Don't throw error, just return silently to allow normal login
+      return;
     }
+
+    await loadGoogleScript();
 
     window.google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,

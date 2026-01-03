@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { Package, ShoppingBag, Users, DollarSign, TrendingUp, ArrowRight, RefreshCw, Plus, Edit, Trash2, Eye, Download, Bike, QrCode, ShoppingCart, ArrowUpRight, ArrowDownRight, Star, Wifi, WifiOff } from 'lucide-react'
-import { useAuthStore } from '@/lib/store'
+import { useAuthStore, useLanguageStore } from '@/lib/store'
 import { dashboardAPI, productsAPI, ordersAPI } from '@/lib/api'
+import { getAdminText } from '@/lib/i18n/admin'
 import { formatCurrency } from '@/lib/utils'
 import { connectSocket, subscribeToDashboard } from '@/lib/socket'
 import AdminSidebar from '@/components/admin/Sidebar'
@@ -16,6 +17,8 @@ import Link from 'next/link'
 export default function AdminDashboard() {
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
+  const { language } = useLanguageStore()
+  const t = getAdminText(language)
   const [stats, setStats] = useState<any>(null)
   const [revenueData, setRevenueData] = useState<any[]>([])
   const [topProducts, setTopProducts] = useState<any[]>([])
@@ -50,7 +53,7 @@ export default function AdminDashboard() {
       console.log('Received dashboard update:', data)
       if (data.stats) setStats(data.stats)
       if (data.recentOrders) setRecentOrders(data.recentOrders)
-      toast.success('Dữ liệu đã được cập nhật!', { duration: 2000, icon: '🔄' })
+      toast.success(language === 'ja' ? 'データが更新されました!' : 'Dữ liệu đã được cập nhật!', { duration: 2000, icon: '🔄' })
     })
 
     // Listen for new orders
@@ -61,7 +64,7 @@ export default function AdminDashboard() {
         totalOrders: (prev?.totalOrders || 0) + 1,
         totalRevenue: (prev?.totalRevenue || 0) + (order.totalAmount || 0)
       }))
-      toast.success('Có đơn hàng mới!', { icon: '🛒' })
+      toast.success(language === 'ja' ? '新しい注文があります!' : 'Có đơn hàng mới!', { icon: '🛒' })
     })
 
     return () => {
@@ -108,7 +111,7 @@ export default function AdminDashboard() {
 
   const statCards = [
     {
-      title: 'Tổng doanh thu',
+      title: t('totalRevenue'),
       value: formatCurrency(stats?.totalRevenue || 0),
       change: '+12.5%',
       trend: 'up',
@@ -116,25 +119,25 @@ export default function AdminDashboard() {
       color: 'from-green-600 to-green-700'
     },
     {
-      title: 'Tổng đơn hàng',
+      title: t('totalOrders'),
       value: (stats?.totalOrders || 0).toString(),
-      change: `${stats?.thisMonth?.orders || 0} đơn tháng này`,
+      change: `${stats?.thisMonth?.orders || 0} ${t('thisMonth')}`,
       trend: 'up',
       icon: ShoppingCart,
       color: 'from-blue-600 to-blue-700'
     },
     {
-      title: 'Sản phẩm',
+      title: t('products'),
       value: (stats?.activeProducts || 0).toString(),
-      change: 'Còn hàng',
+      change: t('active'),
       trend: 'up',
       icon: Package,
       color: 'from-purple-600 to-purple-700'
     },
     {
-      title: 'Khách hàng',
+      title: t('customers'),
       value: (stats?.totalCustomers || 0).toString(),
-      change: 'Đã đăng ký',
+      change: language === 'ja' ? '登録済み' : 'Đã đăng ký',
       trend: 'up',
       icon: Users,
       color: 'from-orange-600 to-orange-700'
@@ -149,33 +152,33 @@ export default function AdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-white mb-2">Dashboard Admin</h1>
-              <p className="text-gray-400">Tổng quan hệ thống quản lý rạp chiếu phim</p>
+              <h1 className="text-3xl font-bold text-white mb-2">{t('dashboard')} Admin</h1>
+              <p className="text-gray-400">{language === 'ja' ? 'システム管理の概要' : 'Tổng quan hệ thống quản lý'}</p>
             </div>
             <div className="flex gap-2">
               <button 
                 onClick={() => setTimeRange('24h')}
                 className={`px-4 py-2 rounded-lg transition-colors ${timeRange === '24h' ? 'bg-red-600 text-white' : 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700'}`}
               >
-                24 giờ
+                24 {language === 'ja' ? '時間' : 'giờ'}
               </button>
               <button 
                 onClick={() => setTimeRange('7d')}
                 className={`px-4 py-2 rounded-lg transition-colors ${timeRange === '7d' ? 'bg-red-600 text-white' : 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700'}`}
               >
-                7 ngày
+                7 {language === 'ja' ? '日間' : 'ngày'}
               </button>
               <button 
                 onClick={() => setTimeRange('30d')}
                 className={`px-4 py-2 rounded-lg transition-colors ${timeRange === '30d' ? 'bg-red-600 text-white' : 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700'}`}
               >
-                30 ngày
+                30 {language === 'ja' ? '日間' : 'ngày'}
               </button>
               <button 
                 onClick={() => setTimeRange('90d')}
                 className={`px-4 py-2 rounded-lg transition-colors ${timeRange === '90d' ? 'bg-red-600 text-white' : 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700'}`}
               >
-                90 ngày
+                90 {language === 'ja' ? '日間' : 'ngày'}
               </button>
             </div>
           </div>
@@ -216,8 +219,8 @@ export default function AdminDashboard() {
           >
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-bold text-white mb-1">Doanh thu theo ngày</h2>
-                <p className="text-sm text-gray-400">Biểu đồ doanh thu 7 ngày gần nhất</p>
+                <h2 className="text-xl font-bold text-white mb-1">{language === 'ja' ? '日別売上' : 'Doanh thu theo ngày'}</h2>
+                <p className="text-sm text-gray-400">{language === 'ja' ? '過去7日間の売上チャート' : 'Biểu đồ doanh thu 7 ngày gần nhất'}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button className="p-2 hover:bg-gray-800 rounded-lg transition-colors">
@@ -271,8 +274,8 @@ export default function AdminDashboard() {
           >
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-bold text-white mb-1">Top Sản Phẩm</h2>
-                <p className="text-sm text-gray-400">Doanh thu cao nhất</p>
+                <h2 className="text-xl font-bold text-white mb-1">{t('topProducts')}</h2>
+                <p className="text-sm text-gray-400">{language === 'ja' ? '売上トップ' : 'Doanh thu cao nhất'}</p>
               </div>
               <Star className="w-6 h-6 text-yellow-400" />
             </div>
@@ -280,7 +283,7 @@ export default function AdminDashboard() {
             <div className="space-y-4">
               {topProducts.length === 0 ? (
                 <div className="text-center py-8 text-gray-400">
-                  Chưa có dữ liệu sản phẩm
+                  {t('noData')}
                 </div>
               ) : (
                 topProducts.slice(0, 5).map((item: any, index: number) => (
@@ -291,8 +294,8 @@ export default function AdminDashboard() {
                       {index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-white text-sm truncate">{item.product?.name || 'Sản phẩm'}</div>
-                      <div className="text-xs text-gray-400">Đã bán: {item.totalSold || 0}</div>
+                      <div className="font-semibold text-white text-sm truncate">{item.product?.name || t('products')}</div>
+                      <div className="text-xs text-gray-400">{language === 'ja' ? '販売数' : 'Đã bán'}: {item.totalSold || 0}</div>
                     </div>
                     <div className="text-right">
                       <div className="font-bold text-white text-sm">{formatCurrency(item.totalRevenue || 0)}</div>
@@ -313,11 +316,11 @@ export default function AdminDashboard() {
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl font-bold text-white mb-1">Hoạt động gần đây</h2>
-              <p className="text-sm text-gray-400">Các giao dịch mới nhất</p>
+              <h2 className="text-xl font-bold text-white mb-1">{t('recentOrders')}</h2>
+              <p className="text-sm text-gray-400">{language === 'ja' ? '最新の取引' : 'Các giao dịch mới nhất'}</p>
             </div>
             <Link href="/admin/orders" className="text-blue-400 hover:text-blue-300 text-sm font-medium flex items-center gap-1">
-              Xem tất cả <ArrowRight className="w-4 h-4" />
+              {language === 'ja' ? 'すべて表示' : 'Xem tất cả'} <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
@@ -325,12 +328,12 @@ export default function AdminDashboard() {
             <table className="w-full">
               <thead className="text-left border-b border-gray-800">
                 <tr>
-                  <th className="pb-4 text-sm font-semibold text-gray-400">Mã đơn</th>
-                  <th className="pb-4 text-sm font-semibold text-gray-400">Khách hàng</th>
-                  <th className="pb-4 text-sm font-semibold text-gray-400">Sản phẩm</th>
-                  <th className="pb-4 text-sm font-semibold text-gray-400">Số tiền</th>
-                  <th className="pb-4 text-sm font-semibold text-gray-400">Trạng thái</th>
-                  <th className="pb-4 text-sm font-semibold text-gray-400">Ngày</th>
+                  <th className="pb-4 text-sm font-semibold text-gray-400">{t('orderNumber')}</th>
+                  <th className="pb-4 text-sm font-semibold text-gray-400">{t('customers')}</th>
+                  <th className="pb-4 text-sm font-semibold text-gray-400">{t('products')}</th>
+                  <th className="pb-4 text-sm font-semibold text-gray-400">{t('orderTotal')}</th>
+                  <th className="pb-4 text-sm font-semibold text-gray-400">{t('orderStatus')}</th>
+                  <th className="pb-4 text-sm font-semibold text-gray-400">{t('orderDate')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800/50">
@@ -346,10 +349,10 @@ export default function AdminDashboard() {
                         <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
                           {order.customer?.name?.charAt(0) || 'K'}
                         </div>
-                        <span className="text-sm text-white">{order.customer?.name || 'Khách'}</span>
+                        <span className="text-sm text-white">{order.customer?.name || (language === 'ja' ? '顧客' : 'Khách')}</span>
                       </div>
                     </td>
-                    <td className="py-4 text-sm text-gray-300">{order.items?.length || 0} sản phẩm</td>
+                    <td className="py-4 text-sm text-gray-300">{order.items?.length || 0} {language === 'ja' ? '商品' : 'sản phẩm'}</td>
                     <td className="py-4 text-sm font-semibold text-white">{formatCurrency(order.totalAmount || 0)}</td>
                     <td className="py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -358,9 +361,9 @@ export default function AdminDashboard() {
                         order.orderStatus === 'cancelled' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
                         'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
                       }`}>
-                        {order.orderStatus === 'delivered' ? 'Hoàn thành' :
-                         order.orderStatus === 'shipping' ? 'Đang giao' :
-                         order.orderStatus === 'cancelled' ? 'Đã hủy' : 'Chờ xử lý'}
+                        {order.orderStatus === 'delivered' ? t('delivered') :
+                         order.orderStatus === 'shipping' ? t('shipped') :
+                         order.orderStatus === 'cancelled' ? t('cancelled') : t('pending')}
                       </span>
                     </td>
                     <td className="py-4 text-sm text-gray-400">

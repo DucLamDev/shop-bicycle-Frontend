@@ -21,6 +21,8 @@ export default function NewProductPage() {
   const [uploadingImages, setUploadingImages] = useState<number[]>([])
   const [formData, setFormData] = useState({
     name: '',
+    nameJa: '',
+    nameEn: '',
     brand: '',
     category: 'electric',
     price: '',
@@ -186,14 +188,41 @@ export default function NewProductPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Tên sản phẩm *
+                    Tên sản phẩm (Tiếng Việt) *
                   </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="Ví dụ: Xe đạp điện Yamaha PAS"
                     required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    🇯🇵 Tên tiếng Nhật
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.nameJa}
+                    onChange={(e) => setFormData({ ...formData, nameJa: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="例: ヤマハPAS電動アシスト自転車"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    🇬🇧 Tên tiếng Anh
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.nameEn}
+                    onChange={(e) => setFormData({ ...formData, nameEn: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="E.g: Yamaha PAS Electric Bicycle"
                   />
                 </div>
 
@@ -316,7 +345,7 @@ export default function NewProductPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Mô tả (English)
+                    🇬🇧 Mô tả (English)
                   </label>
                   <textarea
                     value={formData.description.en}
@@ -325,6 +354,23 @@ export default function NewProductPage() {
                       description: { ...formData.description, en: e.target.value }
                     })}
                     rows={3}
+                    placeholder="Product description in English..."
+                    className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    🇯🇵 Mô tả (日本語)
+                  </label>
+                  <textarea
+                    value={formData.description.ja}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      description: { ...formData.description, ja: e.target.value }
+                    })}
+                    rows={3}
+                    placeholder="商品説明を日本語で入力..."
                     className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                 </div>

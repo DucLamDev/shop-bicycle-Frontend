@@ -55,14 +55,32 @@ export default function CustomerChatWidget() {
     }
     setSessionId(storedSessionId)
 
-    // Check for existing customer info
+    // Check for existing customer info and auto-start session
     const storedInfo = localStorage.getItem('chatCustomerInfo')
     if (storedInfo) {
       const info = JSON.parse(storedInfo)
       setCustomerInfo(info)
       setShowForm(false)
+      // Auto-create session in background
+      initSession(storedSessionId, info)
     }
   }, [])
+
+  // Initialize chat session
+  const initSession = async (sessId: string, info: typeof customerInfo) => {
+    try {
+      const response = await chatAPI.createSession({
+        sessionId: sessId,
+        customerEmail: info.email,
+        customerName: info.name,
+        customerPhone: info.phone
+      })
+      setChatId(response.data.data.chatId)
+      setMessages(response.data.data.messages || [])
+    } catch (error) {
+      console.error('Failed to init chat session:', error)
+    }
+  }
 
   // Connect to socket when chat is opened
   useEffect(() => {
@@ -127,7 +145,24 @@ export default function CustomerChatWidget() {
   }
 
   const sendMessage = async () => {
-    if (!message.trim() || !chatId) return
+    if (!message.trim()) {
+      return
+    }
+    
+    // If no chatId, we need to create a session first
+    if (!chatId) {
+      // Auto-create session with stored info or show form
+      const storedInfo = localStorage.getItem('chatCustomerInfo')
+      if (storedInfo) {
+        const info = JSON.parse(storedInfo)
+        setCustomerInfo(info)
+        await startChat()
+      } else {
+        toast.error(language === 'ja' ? 'まずお名前とメールを入力してください' : 'Vui lòng nhập tên và email trước')
+        setShowForm(true)
+        return
+      }
+    }
 
     const newMessage = {
       sender: 'customer',
@@ -138,18 +173,24 @@ export default function CustomerChatWidget() {
 
     // Optimistically add message
     setMessages(prev => [...prev, newMessage])
+    const messageToSend = message.trim()
     setMessage('')
     setSending(true)
 
     try {
+      if (!chatId) {
+        throw new Error('Chat session not initialized')
+      }
       await chatAPI.sendMessage(chatId, {
-        content: message.trim(),
+        content: messageToSend,
         senderName: customerInfo.name
       })
-    } catch (error) {
-      toast.error('Không thể gửi tin nhắn')
+    } catch (error: any) {
+      console.error('Send message error:', error)
+      toast.error(language === 'ja' ? 'メッセージを送信できませんでした' : 'Không thể gửi tin nhắn')
       // Remove optimistic message on error
       setMessages(prev => prev.slice(0, -1))
+      setMessage(messageToSend) // Restore message
     } finally {
       setSending(false)
     }

@@ -14,6 +14,7 @@ export default function LoginPage() {
   const router = useRouter()
   const { login } = useAuthStore()
   const [loading, setLoading] = useState(false)
+  const [googleReady, setGoogleReady] = useState(false)
   const { register, handleSubmit, formState: { errors } } = useForm()
 
   const onSubmit = async (data: any) => {
@@ -45,9 +46,12 @@ export default function LoginPage() {
           handleGoogleSuccess,
           (error) => {
             console.error('Google Sign-In Error:', error)
-            toast.error('Không thể khởi tạo đăng nhập Google')
           }
         )
+        // Check if Google was initialized successfully
+        if (window.google) {
+          setGoogleReady(true)
+        }
       } catch (error) {
         console.error('Google Setup Error:', error)
       }
@@ -78,11 +82,9 @@ export default function LoginPage() {
   }
 
   const handleGoogleLogin = () => {
-    if (window.google) {
-      window.google.accounts.id.prompt()
-    } else {
-      toast.error('Vui lòng cấu hình Google Client ID trong file .env')
-    }
+    // Redirect to backend OAuth endpoint
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'
+    window.location.href = `${backendUrl}/api/auth/google`
   }
 
   return (

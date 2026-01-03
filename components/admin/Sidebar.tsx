@@ -24,77 +24,80 @@ import {
   Menu,
   X
 } from 'lucide-react'
-import { useAuthStore } from '@/lib/store'
+import { useAuthStore, useLanguageStore } from '@/lib/store'
+import { getAdminText } from '@/lib/i18n/admin'
 
 export default function AdminSidebar() {
   const pathname = usePathname()
   const { logout } = useAuthStore()
+  const { language } = useLanguageStore()
+  const t = getAdminText(language)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
 
   const menuItems = [
     {
-      title: 'Tổng quan',
+      title: t('dashboard'),
       icon: LayoutDashboard,
       href: '/admin',
       exact: true
     },
     {
-      title: 'Sản phẩm',
+      title: t('products'),
       icon: Package,
       href: '/admin/products'
     },
     {
-      title: 'Đơn hàng',
+      title: t('orders'),
       icon: ShoppingCart,
       href: '/admin/orders'
     },
     {
-      title: 'Nhập hàng',
+      title: t('imports'),
       icon: PackagePlus,
       href: '/admin/imports'
     },
     {
-      title: 'Chi phí',
+      title: t('expenses'),
       icon: Receipt,
       href: '/admin/expenses'
     },
     {
-      title: 'Khách hàng thân thiết',
+      title: t('loyalty'),
       icon: Crown,
       href: '/admin/loyalty'
     },
     {
-      title: 'Khách hàng',
+      title: t('customers'),
       icon: Users,
       href: '/admin/customers'
     },
     {
-      title: 'Đối tác',
+      title: t('partners'),
       icon: QrCode,
       href: '/admin/partners'
     },
     {
-      title: 'Mã khuyến mãi',
+      title: t('coupons'),
       icon: Tag,
       href: '/admin/coupons'
     },
     {
-      title: 'Xác minh sinh viên',
+      title: t('studentVerification'),
       icon: GraduationCap,
       href: '/admin/student-verification'
     },
     {
-      title: 'Tin nhắn',
+      title: t('chat'),
       icon: MessageCircle,
       href: '/admin/chat'
     },
     {
-      title: 'Báo cáo',
+      title: t('reports'),
       icon: BarChart3,
       href: '/admin/reports'
     },
     {
-      title: 'Cài đặt',
+      title: t('settings'),
       icon: Settings,
       href: '/admin/settings'
     }
@@ -145,7 +148,7 @@ export default function AdminSidebar() {
         </div>
 
         <div className="px-4 py-3">
-          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Tổng quan</div>
+          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{t('dashboard')}</div>
         </div>
 
         <nav className="flex-1 px-4 overflow-y-auto">
@@ -180,7 +183,7 @@ export default function AdminSidebar() {
             className="flex items-center gap-3 px-4 py-3 w-full text-gray-400 hover:bg-gray-800/50 hover:text-white rounded-xl transition-all"
           >
             <LogOut className="w-5 h-5" />
-            <span className="font-medium text-sm">Đăng xuất</span>
+            <span className="font-medium text-sm">{language === 'ja' ? 'ログアウト' : 'Đăng xuất'}</span>
           </button>
         </div>
       </div>

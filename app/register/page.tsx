@@ -27,6 +27,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [googleReady, setGoogleReady] = useState(false)
   
   const { register, handleSubmit, formState: { errors }, watch } = useForm<RegisterForm>()
 
@@ -41,6 +42,9 @@ export default function RegisterPage() {
             console.error('Google Sign-In Error:', error)
           }
         )
+        if (window.google) {
+          setGoogleReady(true)
+        }
       } catch (error) {
         console.error('Google Setup Error:', error)
       }
@@ -64,11 +68,9 @@ export default function RegisterPage() {
   }
 
   const handleGoogleRegister = () => {
-    if (window.google) {
-      window.google.accounts.id.prompt()
-    } else {
-      toast.error('Vui lòng cấu hình Google Client ID')
-    }
+    // Redirect to backend OAuth endpoint
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'
+    window.location.href = `${backendUrl}/api/auth/google`
   }
 
   const onSubmit = async (data: RegisterForm) => {

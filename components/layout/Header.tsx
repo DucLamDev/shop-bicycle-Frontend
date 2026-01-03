@@ -7,6 +7,7 @@ import { ShoppingCart, Menu, X, User, LogOut, Globe } from 'lucide-react'
 import { useAuthStore, useCartStore, useLanguageStore } from '@/lib/store'
 import { useTranslation, AVAILABLE_LANGUAGES } from '@/lib/i18n'
 import CurrencySelector from '@/components/CurrencySelector'
+import { CompactLogo } from '@/components/Logo'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -27,14 +28,8 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          <Link href="/" className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center text-white font-bold text-xl">
-              HB
-            </div>
-            <div className="hidden sm:block">
-              <div className="text-xl font-bold text-gray-900">HBike Japan</div>
-              <div className="text-xs text-gray-500">{t('home.subtitle')}</div>
-            </div>
+          <Link href="/" className="flex items-center">
+            <CompactLogo />
           </Link>
 
           <nav className="hidden lg:flex items-center space-x-8">

@@ -127,8 +127,36 @@ export default function HomePage() {
     <div className="min-h-screen bg-white">
       <Header />
       
-      <section className="relative h-[600px] bg-white overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=1920')] bg-cover bg-center" />
+      <section className="relative h-[250px] sm:h-[350px] md:h-[450px] bg-gray-100 overflow-hidden">
+        {/* Auto-rotating banner slider */}
+        <div className="absolute inset-0">
+          {[
+            {
+              src: 'https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=1920',
+              className: 'bg-cover bg-center'
+            },
+            {
+              src: 'https://res.cloudinary.com/dylkppwxt/image/upload/v1767440536/ffa8e3a5-60e9-4c23-ac50-20ea504f8c2e_kt3ga1.jpg',
+              className: 'bg-contain bg-center bg-no-repeat bg-[#ffeb3b]' // Yellow background to match banner
+            }
+          ].map((slide, index) => (
+            <motion.div
+              key={index}
+              className={`absolute inset-0 ${slide.className}`}
+              style={{ backgroundImage: `url(${slide.src})` }}
+              initial={{ opacity: index === 0 ? 1 : 0 }}
+              animate={{ 
+                opacity: [1, 1, 0, 0, 1],
+                transition: {
+                  duration: 8,
+                  repeat: Infinity,
+                  delay: index * 4,
+                  times: [0, 0.4, 0.5, 0.9, 1]
+                }
+              }}
+            />
+          ))}
+        </div>
         <div className="absolute inset-0 bg-gradient-to-r from-white/40 via-transparent to-transparent" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-start pt-16">
           <motion.div

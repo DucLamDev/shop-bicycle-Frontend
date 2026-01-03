@@ -55,9 +55,9 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900 mb-1 text-lg">{t('contact.phone')}</h3>
-                  <p className="text-gray-600 font-semibold">+84 XXX-XXXX-XXXX</p>
+                  <p className="text-gray-600 font-semibold">+81-XXX-XXXX-XXXX</p>
                   <p className="text-sm text-gray-500 mt-1">
-                    🕒 Thứ 2 - Thứ 6: 9:00-18:00
+                    🕒 月-土: 10:00-19:00
                   </p>
                 </div>
               </motion.div>
@@ -71,9 +71,9 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900 mb-1 text-lg">{t('contact.email')}</h3>
-                  <p className="text-gray-600 font-semibold">info@hbikevietnam.vn</p>
+                  <p className="text-gray-600 font-semibold">info@hungthinhbike.com</p>
                   <p className="text-sm text-gray-500 mt-1">
-                    ⏱️ Phản hồi trong vòng 24 giờ
+                    ⏱️ 24時間以内に返信
                   </p>
                 </div>
               </motion.div>
@@ -87,9 +87,9 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900 mb-1 text-lg">{t('contact.lineZalo')}</h3>
-                  <p className="text-gray-600 font-semibold">@hbikejapan</p>
+                  <p className="text-gray-600 font-semibold">@hungthinhbike</p>
                   <p className="text-sm text-gray-500 mt-1">
-                    ⚡ Hỗ trợ nhanh chóng
+                    ⚡ 迅速サポート
                   </p>
                 </div>
               </motion.div>
@@ -103,10 +103,10 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900 mb-1 text-lg">{t('contact.address')}</h3>
-                  <p className="text-gray-600 font-semibold">Hà Nội, Việt Nam</p>
+                  <p className="text-gray-600 font-semibold">〒651-0077 神戸市中央区日暮通2-4-18-1F</p>
                   <p className="text-sm text-gray-500 mt-1">
-                    📅 Thứ 2 - Thứ 6: 9:00 - 18:00<br />
-                    Chủ nhật: Nghỉ 🌴
+                    📅 月-土: 10:00-19:00<br />
+                    日曜日: 定休日 🌴
                   </p>
                 </div>
               </motion.div>
@@ -131,14 +131,14 @@ export default function ContactPage() {
               className="w-full h-96 rounded-xl overflow-hidden shadow-lg border-4 border-gray-100"
             >
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.096888665867!2d105.8341598!3d21.0277644!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ab9bd9861ca1%3A0xe7887f7b72ca17a!2zSMOgIE7hu5lpLCBWaeG7h3QgTmFt!5e0!3m2!1svi!2s!4v1234567890123!5m2!1svi!2s"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3280.5!2d135.1956!3d34.6937!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzTCsDQxJzM3LjMiTiAxMzXCsDExJzQ0LjIiRQ!5e0!3m2!1sja!2sjp!4v1609459200000!5m2!1sja!2sjp"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="HBike Japan Location"
+                title="HƯNG THỊNH 自転車店 Location"
               />
             </motion.div>
 

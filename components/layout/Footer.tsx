@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Phone, Mail, MapPin, Facebook, MessageCircle, ExternalLink, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Logo from '@/components/Logo'
 
 // Shop address for Google Maps
 const SHOP_ADDRESS = '神戸市中央区日暮通2-4-18-1F'
@@ -13,10 +14,10 @@ const GOOGLE_MAPS_LINK = `https://www.google.com/maps/search/?api=1&query=${enco
 
 // Social media links
 const SOCIAL_LINKS = {
-  facebook: 'https://facebook.com/hbikejapan',
-  line: 'https://line.me/ti/p/@hbikejapan',
-  zalo: 'https://zalo.me/hbikejapan',
-  instagram: 'https://instagram.com/hbikejapan'
+  facebook: 'https://facebook.com/hungthinhbike',
+  line: 'https://line.me/ti/p/@hungthinhbike',
+  zalo: 'https://zalo.me/hungthinhbike',
+  instagram: 'https://instagram.com/hungthinhbike'
 }
 
 // Line icon component
@@ -41,15 +42,23 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center text-white font-bold">
-                HB
+            <Logo size="md" className="mb-4" />
+            <div className="space-y-2 text-sm text-gray-400 mb-4">
+              <p className="font-semibold text-red-400">HƯNG THỊNH 自転車店</p>
+              <p>Thu mua – Bán – Sửa chữa</p>
+              <p>• Xe trợ lực • Xe thể thao • Xe đạp thường</p>
+              <p>Nhận đổi xe • Bảo hành • Tư vấn</p>
+              <div className="border-t border-gray-700 pt-2 mt-2">
+                <p>買取・販売・修理</p>
+                <p>・電動アシスト自転車 ・スポーツ自転車 ・一般自転車</p>
+                <p>下取り • 保証 • 相談OK</p>
               </div>
-              <div className="text-white font-bold text-lg">HBike Japan</div>
+              <div className="border-t border-gray-700 pt-2 mt-2">
+                <p>Buy – Sell – Repair</p>
+                <p>• Electric-assist bicycles • Sports bicycles • Standard bicycles</p>
+                <p>Trade-in • Warranty • Consultation</p>
+              </div>
             </div>
-            <p className="text-sm text-gray-400 mb-4">
-              電動アシスト自転車専門店。新品・中古の高品質な自転車をお手頃価格でご提供。
-            </p>
             <div className="flex space-x-3">
               <a 
                 href={SOCIAL_LINKS.facebook} 
@@ -150,7 +159,7 @@ export default function Footer() {
               <li className="flex items-start space-x-3">
                 <Mail className="w-5 h-5 text-primary-400 flex-shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  info@hbikejapan.com
+                  info@hungthinhbike.com
                 </div>
               </li>
               <li className="flex items-start space-x-3">
@@ -182,7 +191,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-500">
-          <p>&copy; {new Date().getFullYear()} HBike Japan. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} HƯNG THỊNH 自転車店. All rights reserved.</p>
         </div>
       </div>
 
@@ -210,7 +219,7 @@ export default function Footer() {
                     <MapPin className="w-5 h-5 text-red-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900">HBike Japan 店舗</h3>
+                    <h3 className="font-bold text-gray-900">HƯNG THỊNH 自転車店</h3>
                     <p className="text-sm text-gray-500">{SHOP_ADDRESS}</p>
                   </div>
                 </div>
@@ -232,7 +241,7 @@ export default function Footer() {
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  title="HBike Japan Location"
+                  title="HƯNG THỊNH 自転車店 Location"
                 />
               </div>
 

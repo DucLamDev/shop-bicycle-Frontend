@@ -280,7 +280,7 @@ export default function AdminPartnersPage() {
                   </div>
                   <div>
                     <div className="text-2xl font-bold text-emerald-400">
-                      {partner.commission || 0}%
+                      ¥{(partner.totalCommissionEarned || 0).toLocaleString()}
                     </div>
                     <div className="text-xs text-gray-400">Hoa hồng</div>
                   </div>
