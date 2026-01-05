@@ -29,6 +29,24 @@ export const authAPI = {
     api.get('/auth/me'),
 }
 
+export const usersAPI = {
+  getAll: (params?: any) => 
+    api.get('/auth/users', { params }),
+  getById: (id: string) => 
+    api.get(`/auth/users/${id}`),
+  create: (data: any) => 
+    api.post('/auth/users', data),
+  update: (id: string, data: any) => 
+    api.put(`/auth/users/${id}`, data),
+  delete: (id: string) => 
+    api.delete(`/auth/users/${id}`),
+}
+
+export const collaboratorAPI = {
+  getDashboard: () => 
+    api.get('/auth/collaborator/dashboard'),
+}
+
 export const productsAPI = {
   getAll: (params?: any) => 
     api.get('/products', { params }),
@@ -174,8 +192,8 @@ export const shippingAPI = {
 }
 
 export const miniGameAPI = {
-  getWheelConfig: () => 
-    api.get('/mini-game/wheel/config'),
+  getWheelConfig: (params?: { playerId?: string }) => 
+    api.get('/mini-game/wheel/config', { params }),
   spinWheel: (data?: { playerId?: string; email?: string }) => 
     api.post('/mini-game/wheel/spin', data),
   playScratchCard: () => 

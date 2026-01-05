@@ -16,6 +16,7 @@ export const adminTranslations: Record<string, Record<string, string>> = {
   imports: { vi: 'Nhập hàng', ja: '仕入れ', en: 'Imports' },
   loyalty: { vi: 'Khách hàng thân thiết', ja: 'ロイヤリティ', en: 'Loyalty' },
   studentVerification: { vi: 'Xác minh sinh viên', ja: '学生認証', en: 'Student Verification' },
+  userManagement: { vi: 'Quản lý người dùng', ja: 'ユーザー管理', en: 'User Management' },
 
   // Actions
   add: { vi: 'Thêm', ja: '追加', en: 'Add' },

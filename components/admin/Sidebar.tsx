@@ -72,6 +72,11 @@ export default function AdminSidebar() {
       href: '/admin/customers'
     },
     {
+      title: t('userManagement'),
+      icon: Users,
+      href: '/admin/users'
+    },
+    {
       title: t('partners'),
       icon: QrCode,
       href: '/admin/partners'

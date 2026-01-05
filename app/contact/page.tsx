@@ -128,10 +128,10 @@ export default function ContactPage() {
             
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className="w-full h-96 rounded-xl overflow-hidden shadow-lg border-4 border-gray-100"
+              className="w-full h-96 rounded-xl overflow-hidden shadow-lg border-4 border-gray-100 relative"
             >
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3280.5!2d135.1956!3d34.6937!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzTCsDQxJzM3LjMiTiAxMzXCsDExJzQ0LjIiRQ!5e0!3m2!1sja!2sjp!4v1609459200000!5m2!1sja!2sjp"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3280.0!2d135.19!3d34.69!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzTCsDQxJzI0LjAiTiAxMzXCsDExJzI0LjAiRQ!5e0!3m2!1sja!2sjp!4v1609459200000!5m2!1sja!2sjp"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
@@ -140,6 +140,15 @@ export default function ContactPage() {
                 referrerPolicy="no-referrer-when-downgrade"
                 title="HƯNG THỊNH 自転車店 Location"
               />
+              <a 
+                href="https://maps.app.goo.gl/47ZhRxjddeZ61xK29?g_st=ipc"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute bottom-4 right-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg transition-colors flex items-center gap-2"
+              >
+                <MapPin className="w-4 h-4" />
+                Google Maps
+              </a>
             </motion.div>
 
             <motion.p

@@ -127,7 +127,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-white">
       <Header />
       
-      <section className="relative h-[250px] sm:h-[350px] md:h-[450px] bg-gray-100 overflow-hidden">
+      <section className="relative h-[300px] sm:h-[450px] md:h-[600px] bg-gray-100 overflow-hidden">
         {/* Auto-rotating banner slider */}
         <div className="absolute inset-0">
           {[
@@ -156,32 +156,6 @@ export default function HomePage() {
               }}
             />
           ))}
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-r from-white/40 via-transparent to-transparent" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-start pt-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-lg"
-          >
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 drop-shadow-lg">
-              {t('home.title')}
-            </h1>
-            <p className="text-2xl md:text-3xl text-primary-600 mb-4 font-semibold drop-shadow-md">
-              {t('home.subtitle')}
-            </p>
-            <p className="text-lg text-gray-800 mb-8 drop-shadow-md">
-              {t('home.description')}
-            </p>
-            <Link
-              href="/products"
-              className="inline-flex items-center px-8 py-4 bg-gray-700 text-white rounded-lg text-lg font-semibold hover:bg-gray-800 hover:shadow-2xl hover:scale-105 transition-all shadow-lg"
-            >
-              {t('home.viewProducts')}
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Link>
-          </motion.div>
         </div>
       </section>
 

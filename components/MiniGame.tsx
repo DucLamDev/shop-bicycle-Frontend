@@ -258,7 +258,10 @@ export default function MiniGame() {
     setResult(null)
 
     try {
-      const response = await miniGameAPI.spinWheel()
+      const response = await miniGameAPI.spinWheel({
+        playerId: user?.id,
+        email: user?.email
+      })
       const spinResult = response.data.data as SpinResult
 
       // Calculate rotation to land on the prize

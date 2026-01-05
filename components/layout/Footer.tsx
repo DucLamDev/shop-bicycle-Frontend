@@ -9,13 +9,13 @@ import Logo from '@/components/Logo'
 // Shop address for Google Maps
 const SHOP_ADDRESS = '神戸市中央区日暮通2-4-18-1F'
 const SHOP_COORDINATES = { lat: 34.6937, lng: 135.1956 } // Kobe coordinates
-const GOOGLE_MAPS_EMBED_URL = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3280.5!2d135.1956!3d34.6937!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzTCsDQxJzM3LjMiTiAxMzXCsDExJzQ0LjIiRQ!5e0!3m2!1sja!2sjp!4v1609459200000!5m2!1sja!2sjp`
-const GOOGLE_MAPS_LINK = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(SHOP_ADDRESS)}`
+const GOOGLE_MAPS_EMBED_URL = 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3280.0!2d135.19!3d34.69!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzTCsDQxJzI0LjAiTiAxMzXCsDExJzI0LjAiRQ!5e0!3m2!1sja!2sjp!4v1609459200000!5m2!1sja!2sjp'
+const GOOGLE_MAPS_LINK = 'https://maps.app.goo.gl/47ZhRxjddeZ61xK29?g_st=ipc'
 
 // Social media links
 const SOCIAL_LINKS = {
-  facebook: 'https://facebook.com/hungthinhbike',
-  line: 'https://line.me/ti/p/@hungthinhbike',
+  facebook: 'https://www.facebook.com/share/1A9Znebd24/?mibextid=wwXIfr',
+  line: 'https://line.me/ti/p/99US8WrXZ3',
   zalo: 'https://zalo.me/hungthinhbike',
   instagram: 'https://instagram.com/hungthinhbike'
 }
