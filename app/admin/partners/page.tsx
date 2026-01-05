@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Plus, Edit, Trash2, Eye, Search, Mail, Phone, MapPin, TrendingUp, DollarSign, Package, X, Copy, Link, ExternalLink } from 'lucide-react'
+import { Plus, Edit, Trash2, Eye, Search, Mail, Phone, MapPin, TrendingUp, DollarSign, Package, X, Copy, Link, ExternalLink, UserPlus, User as UserIcon, CheckCircle } from 'lucide-react'
 import { useAuthStore } from '@/lib/store'
 import { formatCurrency } from '@/lib/utils'
 import AdminSidebar from '@/components/admin/Sidebar'
@@ -20,6 +20,10 @@ export default function AdminPartnersPage() {
   const [editingPartner, setEditingPartner] = useState<any>(null)
   const [selectedPartner, setSelectedPartner] = useState<any>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
+  const [showCreateAccountModal, setShowCreateAccountModal] = useState(false)
+  const [selectedPartnerForAccount, setSelectedPartnerForAccount] = useState<any>(null)
+  const [accountPassword, setAccountPassword] = useState('')
+  const [creatingAccount, setCreatingAccount] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     contactPerson: '',
@@ -122,6 +126,31 @@ export default function AdminPartnersPage() {
       fetchPartners()
     } catch (error) {
       toast.error('Không thể xóa đối tác')
+    }
+  }
+
+  const handleOpenCreateAccount = (partner: any) => {
+    setSelectedPartnerForAccount(partner)
+    setAccountPassword('')
+    setShowCreateAccountModal(true)
+  }
+
+  const handleCreateAccount = async () => {
+    if (!accountPassword || accountPassword.length < 6) {
+      toast.error('Mật khẩu phải có ít nhất 6 ký tự')
+      return
+    }
+
+    try {
+      setCreatingAccount(true)
+      await partnersAPI.createAccount(selectedPartnerForAccount._id, accountPassword)
+      toast.success('Đã tạo tài khoản đăng nhập cho đối tác!')
+      setShowCreateAccountModal(false)
+      fetchPartners()
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Không thể tạo tài khoản')
+    } finally {
+      setCreatingAccount(false)
     }
   }
 
@@ -265,10 +294,17 @@ export default function AdminPartnersPage() {
                     <Phone className="w-4 h-4 text-gray-400" />
                     <span>{partner.phone || 'Chưa có SĐT'}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-300 text-sm">
-                    <MapPin className="w-4 h-4 text-gray-400" />
-                    <span className="truncate">{partner.address || 'Chưa có địa chỉ'}</span>
-                  </div>
+                  {partner.userId ? (
+                    <div className="flex items-center gap-2 text-emerald-400 text-sm bg-emerald-500/10 px-2 py-1 rounded-lg border border-emerald-500/30">
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Có tài khoản: {partner.userId.email}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-amber-400 text-sm bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/30">
+                      <UserIcon className="w-4 h-4" />
+                      <span>Chưa có tài khoản đăng nhập</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 py-4 border-t border-gray-800">
@@ -286,26 +322,37 @@ export default function AdminPartnersPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-2 mt-4">
-                  <button
-                    onClick={() => handleViewDetail(partner)}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
-                  >
-                    <Eye className="w-4 h-4" />
-                    Chi tiết
-                  </button>
-                  <button
-                    onClick={() => handleOpenEdit(partner)}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(partner._id)}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                <div className="space-y-2 mt-4">
+                  {!partner.userId && (
+                    <button
+                      onClick={() => handleOpenCreateAccount(partner)}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      Tạo tài khoản đăng nhập
+                    </button>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleViewDetail(partner)}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                    >
+                      <Eye className="w-4 h-4" />
+                      Chi tiết
+                    </button>
+                    <button
+                      onClick={() => handleOpenEdit(partner)}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(partner._id)}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -597,6 +644,76 @@ export default function AdminPartnersPage() {
                   <ExternalLink className="w-5 h-5" />
                   Xem Dashboard CTV
                 </a>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Create Account Modal */}
+      {showCreateAccountModal && selectedPartnerForAccount && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#1a1f2e] rounded-2xl p-6 w-full max-w-md border border-gray-700"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <UserPlus className="w-6 h-6" />
+                Tạo tài khoản đăng nhập
+              </h2>
+              <button onClick={() => setShowCreateAccountModal(false)} className="text-gray-400 hover:text-white">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-gray-800/50 rounded-xl p-4">
+                <div className="text-sm text-gray-400 mb-2">Đối tác</div>
+                <div className="text-white font-medium">{selectedPartnerForAccount.name}</div>
+                <div className="text-sm text-gray-400 mt-1">{selectedPartnerForAccount.email}</div>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Mật khẩu đăng nhập *</label>
+                <input
+                  type="password"
+                  value={accountPassword}
+                  onChange={(e) => setAccountPassword(e.target.value)}
+                  placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
+                  className="w-full px-4 py-3 bg-gray-800 text-white rounded-xl border border-gray-700 focus:border-emerald-500 outline-none"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Đối tác sẽ dùng email <span className="text-emerald-400">{selectedPartnerForAccount.email}</span> và mật khẩu này để đăng nhập
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateAccountModal(false)}
+                  className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleCreateAccount}
+                  disabled={creatingAccount}
+                  className="flex-1 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {creatingAccount ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Đang tạo...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-5 h-5" />
+                      Tạo tài khoản
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </motion.div>

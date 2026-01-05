@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Users, Search, Plus, Edit2, Trash2, X, Save, 
   Shield, User, UserCog, Mail, Phone, Calendar,
-  ChevronDown, AlertCircle, Check
+  ChevronDown, AlertCircle, Check, Briefcase
 } from 'lucide-react'
 import { usersAPI } from '@/lib/api'
 import { useLanguageStore } from '@/lib/store'
@@ -18,16 +18,13 @@ interface UserData {
   name: string
   email: string
   phone?: string
-  role: 'admin' | 'user' | 'collaborator'
-  collaboratorInfo?: {
-    commissionRate?: {
-      electricBike: number
-      normalBike: number
-      sportBike: number
-    }
-    totalCommission?: number
-    paidCommission?: number
-    pendingCommission?: number
+  role: 'admin' | 'user'
+  partnerId?: {
+    _id: string
+    name: string
+    token: string
+    partnerType: string
+    totalCommissionEarned: number
   }
   createdAt: string
   totalOrders?: number
@@ -39,14 +36,8 @@ interface FormData {
   email: string
   phone: string
   password: string
-  role: 'admin' | 'user' | 'collaborator'
-  collaboratorInfo: {
-    commissionRate: {
-      electricBike: number
-      normalBike: number
-      sportBike: number
-    }
-  }
+  role: 'admin' | 'user'
+  partnerId: string
 }
 
 const initialFormData: FormData = {
@@ -55,13 +46,7 @@ const initialFormData: FormData = {
   phone: '',
   password: '',
   role: 'user',
-  collaboratorInfo: {
-    commissionRate: {
-      electricBike: 5000,
-      normalBike: 2000,
-      sportBike: 3000
-    }
-  }
+  partnerId: ''
 }
 
 export default function AdminUsersPage() {
@@ -102,9 +87,7 @@ export default function AdminUsersPage() {
         phone: user.phone || '',
         password: '',
         role: user.role,
-        collaboratorInfo: {
-          commissionRate: user.collaboratorInfo?.commissionRate || initialFormData.collaboratorInfo.commissionRate
-        }
+        partnerId: typeof user.partnerId === 'object' ? user.partnerId._id : (user.partnerId || '')
       })
     } else {
       setEditingUser(null)
@@ -139,15 +122,12 @@ export default function AdminUsersPage() {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        role: formData.role
+        role: formData.role,
+        partnerId: formData.partnerId || undefined
       }
 
       if (formData.password) {
         dataToSend.password = formData.password
-      }
-
-      if (formData.role === 'collaborator') {
-        dataToSend.collaboratorInfo = formData.collaboratorInfo
       }
 
       if (editingUser) {
@@ -285,9 +265,9 @@ export default function AdminUsersPage() {
                 <UserCog className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">{t('userManagement.collaborators')}</p>
+                <p className="text-sm text-gray-500">{t('userManagement.partners')}</p>
                 <p className="text-xl font-bold text-gray-900">
-                  {users.filter(u => u.role === 'collaborator').length}
+                  {users.filter(u => u.partnerId).length}
                 </p>
               </div>
             </div>
@@ -346,11 +326,17 @@ export default function AdminUsersPage() {
                       <td className="py-3 px-4 text-gray-600">{user.email}</td>
                       <td className="py-3 px-4 text-gray-600">{user.phone || '-'}</td>
                       <td className="py-3 px-4">
-                        <div className="flex justify-center">
+                        <div className="flex justify-center flex-col items-center gap-1">
                           <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getRoleColor(user.role)}`}>
                             {getRoleIcon(user.role)}
                             {getRoleLabel(user.role)}
                           </span>
+                          {user.partnerId && typeof user.partnerId === 'object' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-600 border border-purple-500/30">
+                              <Briefcase className="w-3 h-3" />
+                              {user.partnerId.name}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="py-3 px-4 text-right text-gray-600">{user.totalOrders || 0}</td>
@@ -495,79 +481,23 @@ export default function AdminUsersPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="user">{getRoleLabel('user')}</option>
-                    <option value="collaborator">{getRoleLabel('collaborator')}</option>
                     <option value="admin">{getRoleLabel('admin')}</option>
                   </select>
                 </div>
 
-                {formData.role === 'collaborator' && (
-                  <div className="bg-purple-50 rounded-lg p-4 space-y-3">
-                    <h3 className="font-medium text-purple-900">{t('userManagement.commissionSettings')}</h3>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-xs text-purple-700 mb-1">
-                          {t('userManagement.electricBike')}
-                        </label>
-                        <input
-                          type="number"
-                          value={formData.collaboratorInfo.commissionRate.electricBike}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            collaboratorInfo: {
-                              ...formData.collaboratorInfo,
-                              commissionRate: {
-                                ...formData.collaboratorInfo.commissionRate,
-                                electricBike: parseInt(e.target.value) || 0
-                              }
-                            }
-                          })}
-                          className="w-full px-2 py-1 border border-purple-200 rounded text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-purple-700 mb-1">
-                          {t('userManagement.normalBike')}
-                        </label>
-                        <input
-                          type="number"
-                          value={formData.collaboratorInfo.commissionRate.normalBike}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            collaboratorInfo: {
-                              ...formData.collaboratorInfo,
-                              commissionRate: {
-                                ...formData.collaboratorInfo.commissionRate,
-                                normalBike: parseInt(e.target.value) || 0
-                              }
-                            }
-                          })}
-                          className="w-full px-2 py-1 border border-purple-200 rounded text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-purple-700 mb-1">
-                          {t('userManagement.sportBike')}
-                        </label>
-                        <input
-                          type="number"
-                          value={formData.collaboratorInfo.commissionRate.sportBike}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            collaboratorInfo: {
-                              ...formData.collaboratorInfo,
-                              commissionRate: {
-                                ...formData.collaboratorInfo.commissionRate,
-                                sportBike: parseInt(e.target.value) || 0
-                              }
-                            }
-                          })}
-                          className="w-full px-2 py-1 border border-purple-200 rounded text-sm"
-                        />
-                      </div>
-                    </div>
-                    <p className="text-xs text-purple-600">{t('userManagement.commissionNote')}</p>
-                  </div>
-                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Partner ID
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.partnerId}
+                    onChange={(e) => setFormData({ ...formData, partnerId: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Optional - Link to Partner account"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Enter Partner ID to link this user as a partner</p>
+                </div>
 
                 <div className="flex gap-3 pt-4">
                   <button

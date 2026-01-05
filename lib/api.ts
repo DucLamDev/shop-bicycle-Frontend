@@ -44,7 +44,7 @@ export const usersAPI = {
 
 export const collaboratorAPI = {
   getDashboard: () => 
-    api.get('/auth/collaborator/dashboard'),
+    api.get('/auth/partner/dashboard'),
 }
 
 export const productsAPI = {
@@ -88,6 +88,8 @@ export const partnersAPI = {
     api.delete(`/partners/${id}`),
   regenerateQR: (id: string) => 
     api.get(`/partners/${id}/regenerate-qr`),
+  createAccount: (id: string, password: string) =>
+    api.post(`/partners/${id}/create-account`, { password }),
 }
 
 export const dashboardAPI = {

@@ -99,7 +99,7 @@ export default function Header() {
                       {t('nav.admin')}
                     </Link>
                   )}
-                  {user?.role === 'collaborator' && (
+                  {user?.partnerId && (
                     <Link
                       href="/collaborator"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg"

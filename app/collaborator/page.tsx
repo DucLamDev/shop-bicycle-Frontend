@@ -85,7 +85,7 @@ export default function CollaboratorDashboardPage() {
       const response = await authAPI.getMe()
       const userData = response.data.user
       
-      if (userData.role !== 'collaborator') {
+      if (!userData.partnerId) {
         toast.error(t('collaborator.notAuthorized'))
         router.push('/')
         return

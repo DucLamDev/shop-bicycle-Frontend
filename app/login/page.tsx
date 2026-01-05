@@ -26,8 +26,8 @@ export default function LoginPage() {
       
       if (response.data.user.role === 'admin') {
         router.push('/admin')
-      } else if (response.data.user.role === 'partner') {
-        router.push('/partner')
+      } else if (response.data.user.partnerId) {
+        router.push('/collaborator')
       } else {
         router.push('/')
       }
@@ -68,8 +68,8 @@ export default function LoginPage() {
       
       if (response.data.user.role === 'admin') {
         router.push('/admin')
-      } else if (response.data.user.role === 'partner') {
-        router.push('/partner')
+      } else if (response.data.user.partnerId) {
+        router.push('/collaborator')
       } else {
         router.push('/')
       }

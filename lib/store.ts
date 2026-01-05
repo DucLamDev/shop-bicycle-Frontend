@@ -8,6 +8,7 @@ interface User {
   name: string
   email: string
   role: string
+  partnerId?: string
 }
 
 interface AuthState {
@@ -21,7 +22,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       isAuthenticated: false,
@@ -37,6 +38,12 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      onRehydrateStorage: () => (state) => {
+        // After rehydration, set isAuthenticated based on token/user presence
+        if (state && state.token && state.user) {
+          state.isAuthenticated = true
+        }
+      },
     }
   )
 )

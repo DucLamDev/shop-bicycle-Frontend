@@ -152,7 +152,7 @@ export default function Footer() {
               <li className="flex items-start space-x-3">
                 <Phone className="w-5 h-5 text-primary-400 flex-shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <div>+81-XX-XXXX-XXXX</div>
+                  <div>070-2210-6017</div>
                   <div className="text-gray-500">月-土 10:00-19:00</div>
                 </div>
               </li>
