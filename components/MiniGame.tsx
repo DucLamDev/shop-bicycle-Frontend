@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Gift, X, Sparkles, Copy, Check, Star, Zap, Trophy, PartyPopper } from 'lucide-react'
 import { miniGameAPI } from '@/lib/api'
-import { useLanguageStore } from '@/lib/store'
+import { useAuthStore, useLanguageStore } from '@/lib/store'
 import toast from 'react-hot-toast'
 
 // i18n translations for MiniGame
@@ -207,6 +207,7 @@ function GlowingOrbs() {
 export default function MiniGame() {
   const { language } = useLanguageStore()
   const t = (key: string) => translations[key]?.[language] || translations[key]?.vi || key
+  const user = useAuthStore(state => state.user)
   
   const [isOpen, setIsOpen] = useState(false)
   const [isSpinning, setIsSpinning] = useState(false)
