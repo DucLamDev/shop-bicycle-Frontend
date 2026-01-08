@@ -3,25 +3,47 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Save, Bell, Lock, Globe, Mail, Palette, Database, Shield, User } from 'lucide-react'
-import { useAuthStore } from '@/lib/store'
+import { Save, Bell, Lock, Globe, Mail, Palette, Database, Shield, User, Loader2 } from 'lucide-react'
+import { useAuthStore, useLanguageStore } from '@/lib/store'
+import { settingsAPI } from '@/lib/api'
 import AdminSidebar from '@/components/admin/Sidebar'
 import toast from 'react-hot-toast'
+import { getAdminText } from '@/lib/i18n/admin'
 
 export default function AdminSettingsPage() {
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
+  const { language } = useLanguageStore()
+  const t = getAdminText(language)
   const [activeTab, setActiveTab] = useState('general')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [settings, setSettings] = useState({
-    siteName: 'HBike Vietnam',
-    siteEmail: 'info@hbikevietnam.vn',
-    sitePhone: '+84 XXX-XXXX-XXXX',
-    currency: 'VND',
-    language: 'vi',
+    siteName: 'HBIKE Japan',
+    siteEmail: 'contact@hbike.jp',
+    sitePhone: '078-123-4567',
+    siteAddress: '〒651-0077 神戸市中央区日暮通2-4-18-1F',
+    currency: 'JPY',
+    language: 'ja',
     notificationEmail: true,
     notificationSMS: false,
+    orderNotificationEmail: '',
     autoBackup: true,
-    backupFrequency: 'daily'
+    backupFrequency: 'daily',
+    lastBackupAt: null as Date | null,
+    primaryColor: '#ef4444',
+    theme: 'dark',
+    metaTitle: '',
+    metaDescription: '',
+    metaKeywords: '',
+    taxRate: 10,
+    shippingFreeThreshold: 50000,
+    codFee: 500
+  })
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
   })
 
   useEffect(() => {
@@ -29,10 +51,65 @@ export default function AdminSettingsPage() {
       router.push('/login')
       return
     }
+    fetchSettings()
   }, [isAuthenticated, user])
 
-  const handleSave = () => {
-    toast.success('Đã lưu cài đặt')
+  const fetchSettings = async () => {
+    try {
+      const response = await settingsAPI.get()
+      if (response.data?.data) {
+        setSettings(prev => ({ ...prev, ...response.data.data }))
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await settingsAPI.update(settings)
+      toast.success(t('saveSuccess') || '設定を保存しました')
+    } catch (error) {
+      toast.error(t('saveFailed') || '保存に失敗しました')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleChangePassword = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error('新しいパスワードが一致しません')
+      return
+    }
+    if (passwordData.newPassword.length < 6) {
+      toast.error('パスワードは6文字以上である必要があります')
+      return
+    }
+    try {
+      await settingsAPI.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      })
+      toast.success('パスワードを変更しました')
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'パスワードの変更に失敗しました')
+    }
+  }
+
+  const handleBackup = async () => {
+    try {
+      const response = await settingsAPI.backup()
+      toast.success('バックアップが完了しました')
+      if (response.data?.data?.backupAt) {
+        setSettings(prev => ({ ...prev, lastBackupAt: response.data.data.backupAt }))
+      }
+    } catch (error) {
+      toast.error('バックアップに失敗しました')
+    }
   }
 
   const tabs = [
@@ -211,40 +288,58 @@ export default function AdminSettingsPage() {
 
                 {activeTab === 'security' && (
                   <div>
-                    <h2 className="text-2xl font-bold text-white mb-6">Bảo mật</h2>
+                    <h2 className="text-2xl font-bold text-white mb-6">パスワード変更</h2>
                     
                     <div className="space-y-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
-                          Đổi mật khẩu
+                          現在のパスワード
                         </label>
                         <input
                           type="password"
-                          placeholder="Mật khẩu hiện tại"
+                          value={passwordData.currentPassword}
+                          onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                          placeholder="現在のパスワードを入力"
                           className="w-full px-4 py-3 bg-gray-800/50 text-white rounded-xl border border-gray-700 focus:ring-2 focus:ring-red-500 outline-none mb-3"
                         />
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          新しいパスワード
+                        </label>
                         <input
                           type="password"
-                          placeholder="Mật khẩu mới"
+                          value={passwordData.newPassword}
+                          onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                          placeholder="新しいパスワードを入力"
                           className="w-full px-4 py-3 bg-gray-800/50 text-white rounded-xl border border-gray-700 focus:ring-2 focus:ring-red-500 outline-none mb-3"
                         />
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          パスワード確認
+                        </label>
                         <input
                           type="password"
-                          placeholder="Xác nhận mật khẩu mới"
+                          value={passwordData.confirmPassword}
+                          onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                          placeholder="新しいパスワードを再入力"
                           className="w-full px-4 py-3 bg-gray-800/50 text-white rounded-xl border border-gray-700 focus:ring-2 focus:ring-red-500 outline-none"
                         />
+                        <button
+                          onClick={handleChangePassword}
+                          className="mt-4 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium"
+                        >
+                          パスワードを変更
+                        </button>
                       </div>
 
                       <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
                         <div className="flex gap-3">
                           <Lock className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
                           <div>
-                            <div className="font-medium text-yellow-400 mb-1">Xác thực 2 bước</div>
+                            <div className="font-medium text-yellow-400 mb-1">二段階認証</div>
                             <div className="text-sm text-gray-300">
-                              Tăng cường bảo mật tài khoản với xác thực 2 bước. Bạn sẽ cần mã xác thực mỗi khi đăng nhập.
+                              二段階認証でアカウントのセキュリティを強化。ログイン時に認証コードが必要になります。
                             </div>
                             <button className="mt-3 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors text-sm font-medium">
-                              Kích hoạt
+                              有効にする
                             </button>
                           </div>
                         </div>
@@ -290,9 +385,18 @@ export default function AdminSettingsPage() {
                         </select>
                       </div>
 
-                      <button className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium">
-                        Sao lưu ngay
+                      <button 
+                        onClick={handleBackup}
+                        className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium"
+                      >
+                        今すぐバックアップ
                       </button>
+                      
+                      {settings.lastBackupAt && (
+                        <p className="text-sm text-gray-400 mt-2">
+                          最後のバックアップ: {new Date(settings.lastBackupAt).toLocaleString('ja-JP')}
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -339,13 +443,21 @@ export default function AdminSettingsPage() {
                 <div className="flex gap-3 mt-8 pt-6 border-t border-gray-800">
                   <button
                     onClick={handleSave}
-                    className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors font-medium"
+                    disabled={saving}
+                    className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors font-medium disabled:opacity-50"
                   >
-                    <Save className="w-5 h-5" />
-                    Lưu thay đổi
+                    {saving ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Save className="w-5 h-5" />
+                    )}
+                    {saving ? '保存中...' : '設定を保存'}
                   </button>
-                  <button className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl transition-colors">
-                    Hủy bỏ
+                  <button 
+                    onClick={() => fetchSettings()}
+                    className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl transition-colors"
+                  >
+                    リセット
                   </button>
                 </div>
               </motion.div>

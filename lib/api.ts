@@ -242,6 +242,16 @@ export const uploadAPI = {
     api.post('/upload/product-images', { images }),
   uploadStudentId: (image: string) => 
     api.post('/upload/student-id', { image }),
+  uploadReceipt: (image: string) => 
+    api.post('/upload/receipt', { image }),
+}
+
+export const settingsAPI = {
+  get: () => api.get('/settings'),
+  update: (data: any) => api.put('/settings', data),
+  changePassword: (data: { currentPassword: string; newPassword: string }) => 
+    api.post('/settings/change-password', data),
+  backup: () => api.post('/settings/backup'),
 }
 
 export default api

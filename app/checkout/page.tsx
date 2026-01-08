@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm, useWatch } from 'react-hook-form'
-import { CheckCircle, QrCode, Copy, Check, Clock, Calendar, CreditCard, Truck, Gift, Crown, Printer, MapPin, Store, Package } from 'lucide-react'
+import { CheckCircle, QrCode, Copy, Check, Clock, Calendar, CreditCard, Truck, Gift, Crown, Printer, MapPin, Store, Package, Upload, X, Image as ImageIcon } from 'lucide-react'
 import { useCartStore, useLanguageStore } from '@/lib/store'
-import { ordersAPI, customersAPI, invoiceAPI, shippingAPI } from '@/lib/api'
+import { ordersAPI, customersAPI, invoiceAPI, shippingAPI, uploadAPI } from '@/lib/api'
 
 // Checkout page translations
 const getCheckoutText = (language: string) => {
@@ -51,6 +51,57 @@ const getCheckoutText = (language: string) => {
     free: { vi: 'Miễn phí', ja: '無料', en: 'Free' },
     pickup: { vi: 'Tự đến lấy tại cửa hàng', ja: '店舗受取', en: 'Store Pickup' },
     freeDelivery: { vi: 'Miễn phí ship (trong 20km)', ja: '無料配送 (20km以内)', en: 'Free Delivery (within 20km)' },
+    // Bank transfer section
+    bankTransferInfo: { vi: 'Thông tin chuyển khoản', ja: '振込情報', en: 'Bank Transfer Information' },
+    bankName: { vi: 'Ngân hàng', ja: '銀行名', en: 'Bank Name' },
+    accountNumber: { vi: 'Số tài khoản', ja: '口座番号', en: 'Account Number' },
+    accountHolder: { vi: 'Chủ tài khoản', ja: '口座名義', en: 'Account Holder' },
+    transferAmount: { vi: 'Số tiền', ja: '振込金額', en: 'Transfer Amount' },
+    transferContent: { vi: 'Nội dung chuyển khoản', ja: '振込内容', en: 'Transfer Content' },
+    scanQRToPay: { vi: 'Quét mã QR bằng app ngân hàng để thanh toán', ja: 'QRコードをスキャンしてお支払い', en: 'Scan QR code with banking app to pay' },
+    copyInfo: { vi: 'Sao chép thông tin', ja: '情報をコピー', en: 'Copy Information' },
+    copied: { vi: 'Đã sao chép', ja: 'コピー済み', en: 'Copied' },
+    transferNote: { vi: 'Vui lòng nhập đúng nội dung chuyển khoản để đơn hàng được xử lý nhanh chóng.', ja: '注文を迅速に処理するため、正しい振込内容を入力してください。', en: 'Please enter the correct transfer content for quick order processing.' },
+    // Bill upload section
+    uploadReceipt: { vi: 'Tải lên ảnh bill chuyển khoản', ja: '振込明細書の画像をアップロード', en: 'Upload Transfer Receipt' },
+    uploadReceiptDesc: { vi: 'Sau khi chuyển khoản xong, vui lòng tải lên ảnh bill để xác nhận thanh toán', ja: '振込完了後、確認のため明細書の画像をアップロードしてください', en: 'After completing the transfer, please upload the receipt image for payment confirmation' },
+    selectImage: { vi: 'Chọn ảnh', ja: '画像を選択', en: 'Select Image' },
+    uploading: { vi: 'Đang tải lên...', ja: 'アップロード中...', en: 'Uploading...' },
+    uploadSuccess: { vi: 'Tải lên thành công', ja: 'アップロード成功', en: 'Upload successful' },
+    removeImage: { vi: 'Xóa ảnh', ja: '画像を削除', en: 'Remove image' },
+    receiptRequired: { vi: 'Vui lòng tải lên ảnh bill chuyển khoản', ja: '振込明細書の画像をアップロードしてください', en: 'Please upload the transfer receipt image' },
+    // Delivery time section
+    deliveryTimeSlot: { vi: 'Khung giờ nhận hàng', ja: '配達時間帯', en: 'Delivery Time Slot' },
+    preferredDeliveryDate: { vi: 'Ngày giao hàng mong muốn', ja: '希望配達日', en: 'Preferred Delivery Date' },
+    fromTime: { vi: 'Từ giờ (tùy chọn)', ja: '開始時間（任意）', en: 'From time (optional)' },
+    toTime: { vi: 'Đến giờ (tùy chọn)', ja: '終了時間（任意）', en: 'To time (optional)' },
+    deliveryNotes: { vi: 'Ghi chú giao hàng', ja: '配送備考', en: 'Delivery Notes' },
+    deliveryNotesPlaceholder: { vi: 'VD: Gọi trước 30 phút, để ở bảo vệ...', ja: '例：30分前にお電話ください、警備員に預けてください...', en: 'E.g.: Call 30 minutes before, leave with security...' },
+    notesPlaceholder: { vi: 'Ghi chú về giao hàng hoặc yêu cầu đặc biệt', ja: '配送に関するメモや特別なご要望', en: 'Notes about delivery or special requests' },
+    // Shipping address
+    shippingAddress: { vi: 'Địa chỉ giao hàng', ja: '配送先住所', en: 'Shipping Address' },
+    calculateShipping: { vi: 'Tính phí ship', ja: '配送料計算', en: 'Calculate Shipping' },
+    district: { vi: 'Quận/Huyện', ja: '区/郡', en: 'District' },
+    detailAddress: { vi: 'Địa chỉ chi tiết', ja: '詳細住所', en: 'Detail Address' },
+    // Order summary
+    quantity: { vi: 'Số lượng', ja: '数量', en: 'Quantity' },
+    confirmOrder: { vi: 'Xác nhận đơn hàng', ja: '注文を確定する', en: 'Confirm Order' },
+    // Visa card section
+    companyAccountInfo: { vi: 'Thông tin tài khoản công ty', ja: '会社口座情報', en: 'Company Account Information' },
+    transferGuide: { vi: 'Hướng dẫn chuyển khoản', ja: '振込手順', en: 'Transfer Guide' },
+    searchBank: { vi: 'Tìm ngân hàng', ja: '銀行を検索', en: 'Search bank' },
+    searchBranch: { vi: 'Tìm chi nhánh', ja: '支店を検索', en: 'Search branch' },
+    enterInput: { vi: 'nhập', ja: 'と入力', en: 'enter' },
+    confirmAccountName: { vi: 'Xác nhận tên tài khoản', ja: '口座名義確認', en: 'Confirm account name' },
+    branchName: { vi: 'Chi nhánh', ja: '支店名', en: 'Branch Name' },
+    accountType: { vi: 'Loại tài khoản', ja: '口座種別', en: 'Account Type' },
+    note: { vi: 'Lưu ý', ja: '注意', en: 'Note' },
+    transferFeeNote: { vi: 'Phí chuyển khoản do khách hàng chịu', ja: '振込手数料はお客様ご負担となります', en: 'Transfer fee is borne by customer' },
+    afterTransferNote: { vi: 'Sau khi xác nhận chuyển khoản, đơn hàng sẽ được xử lý.', ja: 'お振込み確認後、ご注文を処理いたします。', en: 'After confirming the transfer, the order will be processed.' },
+    // Payment methods
+    scanQRFast: { vi: 'Quét mã QR để thanh toán nhanh chóng', ja: 'QRコードをスキャンして素早くお支払い', en: 'Scan QR for quick payment' },
+    payViaVNPAY: { vi: 'Thanh toán qua cổng VNPAY - An toàn & Bảo mật', ja: 'VNPAYゲートウェイ経由でお支払い - 安全＆セキュア', en: 'Pay via VNPAY gateway - Safe & Secure' },
+    payOnDelivery: { vi: 'Thanh toán tiền mặt khi nhận hàng - Có phí COD', ja: '代金引換 - 代引き手数料あり', en: 'Pay cash on delivery - COD fee applies' },
   }
   return (key: string) => texts[key]?.[language] || texts[key]?.vi || key
 }
@@ -60,12 +111,13 @@ import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import toast from 'react-hot-toast'
 
-// Bank account info for QR code (Japan)
+// Bank account info for QR code (Vietnam - MB Bank)
 const BANK_INFO = {
-  bankName: 'Japan Post Bank',
-  accountNumber: '12345678',
-  accountName: 'HBIKE JAPAN',
-  bankCode: '9900'
+  bankName: 'MB Bank',
+  accountNumber: '0344343081',
+  accountName: 'TA VAN HUNG',
+  bankCode: 'MB',
+  qrImage: '/image/qrcode.jpg'
 }
 
 // COD fee (500 yen)
@@ -136,6 +188,10 @@ function CheckoutContent() {
     method: string
     description: string
   } | null>(null)
+  
+  // Receipt image upload state for bank transfer
+  const [receiptImage, setReceiptImage] = useState<string | null>(null)
+  const [uploadingReceipt, setUploadingReceipt] = useState(false)
 
   const { register, handleSubmit, formState: { errors }, control, watch } = useForm()
   const paymentMethod = useWatch({ control, name: 'paymentMethod' })
@@ -225,11 +281,66 @@ function CheckoutContent() {
   }
 
   const copyBankInfo = () => {
-    const info = `Ngân hàng: ${BANK_INFO.bankName}\nSố tài khoản: ${BANK_INFO.accountNumber}\nChủ tài khoản: ${BANK_INFO.accountName}\nSố tiền: ${formatCurrency(getTotalPrice())}\nNội dung: Thanh toan ${tempOrderCode}`
+    const info = `${getText('bankName')}: ${BANK_INFO.bankName}\n${getText('accountNumber')}: ${BANK_INFO.accountNumber}\n${getText('accountHolder')}: ${BANK_INFO.accountName}\n${getText('transferAmount')}: ${formatCurrency(totalAmount)}\n${getText('transferContent')}: Thanh toan ${tempOrderCode}`
     navigator.clipboard.writeText(info)
     setCopied(true)
-    toast.success('Đã sao chép thông tin chuyển khoản')
+    toast.success(getText('copied'))
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  // Handle receipt image upload
+  const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file')
+      return
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image size must be less than 10MB')
+      return
+    }
+
+    setUploadingReceipt(true)
+    try {
+      // Convert to base64 first
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        const base64Image = reader.result as string
+        try {
+          // Upload to Cloudinary via public receipt upload API
+          const response = await uploadAPI.uploadReceipt(base64Image)
+          if (response.data?.url) {
+            setReceiptImage(response.data.url)
+            toast.success(getText('uploadSuccess'))
+          } else {
+            throw new Error('No URL returned')
+          }
+        } catch (uploadError) {
+          console.error('Upload to cloud failed:', uploadError)
+          // Fallback: store base64 directly
+          setReceiptImage(base64Image)
+          toast.success(getText('uploadSuccess'))
+        }
+        setUploadingReceipt(false)
+      }
+      reader.onerror = () => {
+        setUploadingReceipt(false)
+        toast.error('Upload failed')
+      }
+      reader.readAsDataURL(file)
+    } catch (error) {
+      setUploadingReceipt(false)
+      toast.error('Upload failed')
+    }
+  }
+
+  const removeReceiptImage = () => {
+    setReceiptImage(null)
   }
 
   const onSubmit = async (data: any) => {
@@ -269,7 +380,19 @@ function CheckoutContent() {
           specialInstructions: data.deliveryInstructions || null
         },
         notes: data.notes,
-        partner: partnerToken
+        partner: partnerToken,
+        // Bank transfer receipt image
+        bankTransferInfo: data.paymentMethod === 'bank_transfer' ? {
+          bankName: BANK_INFO.bankName,
+          accountNumber: BANK_INFO.accountNumber,
+          accountName: BANK_INFO.accountName,
+          transferContent: `Thanh toan ${tempOrderCode}`,
+          receiptImage: receiptImage || null
+        } : undefined,
+        // Visa card receipt image
+        visaCardInfo: data.paymentMethod === 'visa_card' ? {
+          receiptImage: receiptImage || null
+        } : undefined
       }
 
       const response = await ordersAPI.create(orderData)
@@ -361,20 +484,20 @@ function CheckoutContent() {
       <Header />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Thanh toán</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">{getText('checkout')}</h1>
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Thông tin khách hàng</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-6">{getText('customerInfo')}</h2>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Họ và tên *
+                      {getText('fullName')} *
                     </label>
                     <input
-                      {...register('name', { required: 'Vui lòng nhập họ tên' })}
+                      {...register('name', { required: getText('required') })}
                       type="text"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
@@ -386,14 +509,14 @@ function CheckoutContent() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email *
+                        {getText('email')} *
                       </label>
                       <input
                         {...register('email', {
-                          required: 'Vui lòng nhập email',
+                          required: getText('required'),
                           pattern: {
                             value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                            message: 'Email không hợp lệ'
+                            message: getText('invalidEmail')
                           }
                         })}
                         type="email"
@@ -406,10 +529,10 @@ function CheckoutContent() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Số điện thoại *
+                        {getText('phone')} *
                       </label>
                       <input
-                        {...register('phone', { required: 'Vui lòng nhập số điện thoại' })}
+                        {...register('phone', { required: getText('required') })}
                         type="tel"
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       />
@@ -422,11 +545,11 @@ function CheckoutContent() {
               </div>
 
               <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">配送先住所 / Địa chỉ giao hàng</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-6">{getText('shippingAddress')}</h2>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      郵便番号 / Mã bưu điện
+                      {getText('postalCode')}
                     </label>
                     <div className="flex gap-2">
                       <input
@@ -786,7 +909,7 @@ function CheckoutContent() {
                   <div className="mt-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
                     <div className="flex items-center gap-2 mb-4">
                       <QrCode className="w-6 h-6 text-blue-600" />
-                      <h3 className="text-lg font-bold text-gray-900">Thông tin chuyển khoản</h3>
+                      <h3 className="text-lg font-bold text-gray-900">{getText('bankTransferInfo')}</h3>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -794,36 +917,36 @@ function CheckoutContent() {
                       <div className="flex flex-col items-center">
                         <div className="bg-white p-3 rounded-xl shadow-lg">
                           <img 
-                            src={generateQRUrl()} 
-                            alt="QR Code chuyển khoản"
+                            src={BANK_INFO.qrImage || generateQRUrl()} 
+                            alt="QR Code"
                             className="w-48 h-48 object-contain"
                           />
                         </div>
                         <p className="text-sm text-gray-600 mt-3 text-center">
-                          Quét mã QR bằng app ngân hàng để thanh toán
+                          {getText('scanQRToPay')}
                         </p>
                       </div>
 
                       {/* Bank Info */}
                       <div className="space-y-3">
                         <div className="bg-white p-4 rounded-lg shadow-sm">
-                          <p className="text-sm text-gray-500">Ngân hàng</p>
+                          <p className="text-sm text-gray-500">{getText('bankName')}</p>
                           <p className="font-semibold text-gray-900">{BANK_INFO.bankName}</p>
                         </div>
                         <div className="bg-white p-4 rounded-lg shadow-sm">
-                          <p className="text-sm text-gray-500">Số tài khoản</p>
+                          <p className="text-sm text-gray-500">{getText('accountNumber')}</p>
                           <p className="font-semibold text-gray-900 font-mono">{BANK_INFO.accountNumber}</p>
                         </div>
                         <div className="bg-white p-4 rounded-lg shadow-sm">
-                          <p className="text-sm text-gray-500">Chủ tài khoản</p>
+                          <p className="text-sm text-gray-500">{getText('accountHolder')}</p>
                           <p className="font-semibold text-gray-900">{BANK_INFO.accountName}</p>
                         </div>
                         <div className="bg-white p-4 rounded-lg shadow-sm">
-                          <p className="text-sm text-gray-500">Số tiền</p>
-                          <p className="font-bold text-xl text-blue-600">{formatCurrency(getTotalPrice())}</p>
+                          <p className="text-sm text-gray-500">{getText('transferAmount')}</p>
+                          <p className="font-bold text-xl text-blue-600">{formatCurrency(totalAmount)}</p>
                         </div>
                         <div className="bg-white p-4 rounded-lg shadow-sm">
-                          <p className="text-sm text-gray-500">Nội dung chuyển khoản</p>
+                          <p className="text-sm text-gray-500">{getText('transferContent')}</p>
                           <p className="font-semibold text-gray-900 font-mono">Thanh toan {tempOrderCode}</p>
                         </div>
                         
@@ -833,26 +956,87 @@ function CheckoutContent() {
                           className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
                           {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                          {copied ? 'Đã sao chép' : 'Sao chép thông tin'}
+                          {copied ? getText('copied') : getText('copyInfo')}
                         </button>
                       </div>
                     </div>
 
                     <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                       <p className="text-sm text-yellow-800">
-                        <strong>Lưu ý:</strong> Vui lòng nhập đúng nội dung chuyển khoản để đơn hàng được xử lý nhanh chóng.
+                        <strong>{getText('note')}:</strong> {getText('transferNote')}
                       </p>
                     </div>
+                  </div>
+                )}
+
+                {/* Receipt Upload Section - Show for both bank transfer and visa card */}
+                {(paymentMethod === 'bank_transfer' || paymentMethod === 'visa_card') && (
+                  <div className="mt-6 p-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Upload className="w-6 h-6 text-green-600" />
+                      <h3 className="text-lg font-bold text-gray-900">{getText('uploadReceipt')}</h3>
+                    </div>
+                    
+                    <p className="text-sm text-gray-600 mb-4">
+                      {getText('uploadReceiptDesc')}
+                    </p>
+
+                    {!receiptImage ? (
+                      <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-green-300 rounded-xl cursor-pointer bg-white hover:bg-green-50 transition-colors">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          {uploadingReceipt ? (
+                            <>
+                              <div className="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin mb-3" />
+                              <p className="text-sm text-gray-500">{getText('uploading')}</p>
+                            </>
+                          ) : (
+                            <>
+                              <ImageIcon className="w-10 h-10 text-green-400 mb-3" />
+                              <p className="mb-2 text-sm text-gray-500">
+                                <span className="font-semibold text-green-600">{getText('selectImage')}</span>
+                              </p>
+                              <p className="text-xs text-gray-400">PNG, JPG (max 5MB)</p>
+                            </>
+                          )}
+                        </div>
+                        <input 
+                          type="file" 
+                          className="hidden" 
+                          accept="image/*"
+                          onChange={handleReceiptUpload}
+                          disabled={uploadingReceipt}
+                        />
+                      </label>
+                    ) : (
+                      <div className="relative">
+                        <img 
+                          src={receiptImage} 
+                          alt="Receipt" 
+                          className="w-full max-h-64 object-contain rounded-lg border border-green-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={removeReceiptImage}
+                          className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                        <div className="mt-2 flex items-center gap-2 text-green-600">
+                          <CheckCircle className="w-5 h-5" />
+                          <span className="text-sm font-medium">{getText('uploadSuccess')}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
 
               <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Ghi chú</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">{getText('notes')}</h2>
                 <textarea
                   {...register('notes')}
                   rows={4}
-                  placeholder="Ghi chú về giao hàng hoặc yêu cầu đặc biệt"
+                  placeholder={getText('notesPlaceholder')}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
@@ -860,7 +1044,7 @@ function CheckoutContent() {
 
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Tóm tắt đơn hàng</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-6">{getText('orderSummary')}</h2>
 
                 <div className="space-y-4 mb-6">
                   {items.map((item) => (
@@ -878,7 +1062,7 @@ function CheckoutContent() {
                         <p className="text-sm font-medium text-gray-900 truncate">
                           {item.product.name}
                         </p>
-                        <p className="text-sm text-gray-500">Số lượng: {item.quantity}</p>
+                        <p className="text-sm text-gray-500">{getText('quantity')}: {item.quantity}</p>
                         <p className="text-sm font-semibold text-primary-600">
                           {formatCurrency(item.product.price * item.quantity)}
                         </p>
@@ -894,10 +1078,10 @@ function CheckoutContent() {
                       <Crown className="w-5 h-5 text-yellow-600" />
                       <div>
                         <p className="font-medium text-yellow-800">
-                          Khách hàng {loyaltyDiscount.tierName}
+                          {loyaltyDiscount.tierName}
                         </p>
                         <p className="text-sm text-yellow-600">
-                          Bạn được giảm {loyaltyDiscount.discount}% cho đơn hàng này!
+                          {getText('loyaltyDiscount')}: {loyaltyDiscount.discount}%
                         </p>
                       </div>
                     </div>
@@ -908,49 +1092,49 @@ function CheckoutContent() {
                   <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-600 flex items-center gap-2">
                       <span className="animate-spin">⏳</span>
-                      Đang kiểm tra ưu đãi khách hàng...
+                      {getText('processing')}
                     </p>
                   </div>
                 )}
 
                 <div className="border-t pt-4 space-y-2 mb-6">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">小計 / Tạm tính</span>
-                    <span className="font-semibold">¥{subtotal.toLocaleString()}</span>
+                    <span className="text-gray-600">{getText('subtotal')}</span>
+                    <span className="font-semibold">{formatCurrency(subtotal)}</span>
                   </div>
                   
                   {loyaltyDiscountAmount > 0 && (
                     <div className="flex justify-between text-green-600">
                       <span className="flex items-center gap-1">
                         <Gift className="w-4 h-4" />
-                        会員割引 ({loyaltyDiscount?.discount}%)
+                        {getText('loyaltyDiscount')} ({loyaltyDiscount?.discount}%)
                       </span>
-                      <span className="font-semibold">-¥{loyaltyDiscountAmount.toLocaleString()}</span>
+                      <span className="font-semibold">-{formatCurrency(loyaltyDiscountAmount)}</span>
                     </div>
                   )}
                   
                   <div className="flex justify-between">
                     <span className="text-gray-600 flex items-center gap-1">
                       <Truck className="w-4 h-4" />
-                      配送料 ({selectedShipping.name})
+                      {getText('shippingFee')}
                     </span>
                     <span className={`font-semibold ${shippingFee === 0 ? 'text-green-600' : ''}`}>
-                      {shippingFee === 0 ? '無料' : `¥${shippingFee.toLocaleString()}`}
+                      {shippingFee === 0 ? getText('free') : formatCurrency(shippingFee)}
                     </span>
                   </div>
                   
                   {codFee > 0 && (
                     <div className="flex justify-between text-orange-600">
-                      <span>代引き手数料</span>
-                      <span className="font-semibold">+¥{codFee.toLocaleString()}</span>
+                      <span>{getText('codFee')}</span>
+                      <span className="font-semibold">+{formatCurrency(codFee)}</span>
                     </div>
                   )}
                   
                   <div className="border-t pt-2">
                     <div className="flex justify-between">
-                      <span className="text-lg font-bold">合計 / Tổng cộng</span>
+                      <span className="text-lg font-bold">{getText('total')}</span>
                       <span className="text-2xl font-bold text-primary-600">
-                        ¥{totalAmount.toLocaleString()}
+                        {formatCurrency(totalAmount)}
                       </span>
                     </div>
                   </div>
@@ -961,7 +1145,7 @@ function CheckoutContent() {
                   disabled={loading}
                   className="w-full px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
                 >
-                  {loading ? '処理中...' : '注文を確定する'}
+                  {loading ? getText('processing') : getText('confirmOrder')}
                 </button>
               </div>
             </div>

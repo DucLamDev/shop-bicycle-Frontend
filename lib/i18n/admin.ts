@@ -86,6 +86,10 @@ export const adminTranslations: Record<string, Record<string, string>> = {
   paymentStatus: { vi: 'Trạng thái thanh toán', ja: '支払い状況', en: 'Payment Status' },
   orderItems: { vi: 'Sản phẩm đặt', ja: '注文商品', en: 'Order Items' },
   updateStatus: { vi: 'Cập nhật trạng thái', ja: 'ステータス更新', en: 'Update Status' },
+  bankTransfer: { vi: 'Chuyển khoản', ja: '銀行振込', en: 'Bank Transfer' },
+  viewReceipt: { vi: 'Xem bill chuyển khoản', ja: '振込明細を見る', en: 'View Transfer Receipt' },
+  noReceipt: { vi: 'Chưa có ảnh bill', ja: '明細書なし', en: 'No receipt uploaded' },
+  printInvoice: { vi: 'In hóa đơn', ja: '請求書を印刷', en: 'Print Invoice' },
 
   // Customers
   customerName: { vi: 'Tên khách hàng', ja: '顧客名', en: 'Customer Name' },
@@ -284,7 +288,6 @@ export const adminTranslations: Record<string, Record<string, string>> = {
   shippingInfo: { vi: 'Thông tin giao hàng', ja: '配送情報', en: 'Shipping Information' },
   paymentInfo: { vi: 'Thông tin thanh toán', ja: '支払い情報', en: 'Payment Information' },
   orderNote: { vi: 'Ghi chú đơn hàng', ja: '注文メモ', en: 'Order Note' },
-  printInvoice: { vi: 'In hóa đơn', ja: '請求書印刷', en: 'Print Invoice' },
   
   // Imports Page
   importManagement: { vi: 'Quản lý nhập hàng', ja: '仕入管理', en: 'Import Management' },

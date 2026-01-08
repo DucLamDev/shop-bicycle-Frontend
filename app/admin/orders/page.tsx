@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Eye, Search, Filter, Download, Trash2, Edit, Printer } from 'lucide-react'
+import { Eye, Search, Filter, Download, Trash2, Edit, Printer, Receipt, Image as ImageIcon } from 'lucide-react'
 import { useAuthStore, useLanguageStore } from '@/lib/store'
 import { ordersAPI, invoiceAPI } from '@/lib/api'
 import { formatCurrency } from '@/lib/utils'
@@ -20,6 +20,7 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
+  const [viewingReceipt, setViewingReceipt] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== 'admin') {
@@ -61,8 +62,28 @@ export default function AdminOrdersPage() {
     }
   }
 
-  const handlePrintInvoice = (orderId: string) => {
-    window.open(invoiceAPI.getInvoiceHtml(orderId), '_blank')
+  const handlePrintInvoice = async (orderId: string) => {
+    // Create iframe for printing
+    const iframe = document.createElement('iframe')
+    iframe.style.position = 'fixed'
+    iframe.style.right = '0'
+    iframe.style.bottom = '0'
+    iframe.style.width = '0'
+    iframe.style.height = '0'
+    iframe.style.border = 'none'
+    iframe.src = invoiceAPI.getInvoiceHtml(orderId)
+    
+    document.body.appendChild(iframe)
+    
+    iframe.onload = () => {
+      setTimeout(() => {
+        iframe.contentWindow?.print()
+        // Remove iframe after print dialog closes
+        setTimeout(() => {
+          document.body.removeChild(iframe)
+        }, 1000)
+      }, 500)
+    }
   }
 
   const filteredOrders = orders.filter(order => {
@@ -165,6 +186,7 @@ export default function AdminOrdersPage() {
                     <th className="px-6 py-4 text-left text-white font-semibold">{t('customers')}</th>
                     <th className="px-6 py-4 text-left text-white font-semibold">{t('products')}</th>
                     <th className="px-6 py-4 text-left text-white font-semibold">{t('orderTotal')}</th>
+                    <th className="px-6 py-4 text-left text-white font-semibold">{t('paymentMethod')}</th>
                     <th className="px-6 py-4 text-left text-white font-semibold">{t('orderStatus')}</th>
                     <th className="px-6 py-4 text-left text-white font-semibold">{t('orderDate')}</th>
                     <th className="px-6 py-4 text-right text-white font-semibold">{t('actions')}</th>
@@ -192,6 +214,40 @@ export default function AdminOrdersPage() {
                       </td>
                       <td className="px-6 py-4 text-white font-semibold">
                         {formatCurrency(order.totalAmount || 0)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            order.paymentMethod === 'bank_transfer' ? 'bg-blue-500/20 text-blue-400' :
+                            order.paymentMethod === 'cod' ? 'bg-yellow-500/20 text-yellow-400' :
+                            'bg-purple-500/20 text-purple-400'
+                          }`}>
+                            {order.paymentMethod === 'bank_transfer' ? t('bankTransfer') :
+                             order.paymentMethod === 'cod' ? 'COD' : 'Visa'}
+                          </span>
+                          {(order.paymentMethod === 'bank_transfer' || order.paymentMethod === 'visa_card') && (
+                            <button
+                              onClick={() => {
+                                const receiptUrl = order.bankTransferInfo?.receiptImage || order.visaCardInfo?.receiptImage
+                                if (receiptUrl) {
+                                  setViewingReceipt(receiptUrl)
+                                } else {
+                                  alert(t('noReceipt') || 'Chưa có ảnh bill chuyển khoản')
+                                }
+                              }}
+                              className={`p-1 rounded transition-colors ${
+                                order.bankTransferInfo?.receiptImage || order.visaCardInfo?.receiptImage
+                                  ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                                  : 'bg-gray-500/20 text-gray-400 hover:bg-gray-500/30'
+                              }`}
+                              title={order.bankTransferInfo?.receiptImage || order.visaCardInfo?.receiptImage 
+                                ? (t('viewReceipt') || 'Xem bill') 
+                                : (t('noReceipt') || 'Chưa có bill')}
+                            >
+                              <ImageIcon className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <select
@@ -249,6 +305,37 @@ export default function AdminOrdersPage() {
           </div>
         </div>
       </div>
+
+      {/* Receipt Image Modal */}
+      {viewingReceipt && (
+        <div 
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          onClick={() => setViewingReceipt(null)}
+        >
+          <div className="relative max-w-3xl max-h-[90vh] bg-gray-800 rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-gray-700">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Receipt className="w-5 h-5 text-green-400" />
+                {t('viewReceipt') || 'Bill chuyển khoản'}
+              </h3>
+              <button
+                onClick={() => setViewingReceipt(null)}
+                className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 overflow-auto max-h-[calc(90vh-80px)]">
+              <img 
+                src={viewingReceipt} 
+                alt="Transfer Receipt" 
+                className="w-full h-auto rounded-lg"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
