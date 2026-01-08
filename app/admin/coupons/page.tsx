@@ -235,6 +235,16 @@ export default function AdminCouponsPage() {
                             Đơn tối thiểu: {formatCurrency(coupon.minOrderAmount)}
                           </p>
                         )}
+                        {coupon.maxProducts && (
+                          <p className="text-xs text-blue-600 mt-1">
+                            Tối đa {coupon.maxProducts} xe/đơn
+                          </p>
+                        )}
+                        {coupon.maxOrders && (
+                          <p className="text-xs text-purple-600 mt-1">
+                            Tối đa {coupon.maxOrders} đơn hàng
+                          </p>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-sm font-semibold text-blue-600">
@@ -318,6 +328,8 @@ function CouponModal({ coupon, onClose, onSuccess }: any) {
     startDate: coupon?.startDate ? new Date(coupon.startDate).toISOString().split('T')[0] : '',
     endDate: coupon?.endDate ? new Date(coupon.endDate).toISOString().split('T')[0] : '',
     usageLimit: coupon?.usageLimit || '',
+    maxOrders: coupon?.maxOrders || '',
+    maxProducts: coupon?.maxProducts || '',
     isActive: coupon?.isActive ?? true,
   })
   const [loading, setLoading] = useState(false)
@@ -333,6 +345,8 @@ function CouponModal({ coupon, onClose, onSuccess }: any) {
         minOrderAmount: Number(formData.minOrderAmount) || 0,
         maxDiscountAmount: Number(formData.maxDiscountAmount) || null,
         usageLimit: Number(formData.usageLimit) || null,
+        maxOrders: Number(formData.maxOrders) || null,
+        maxProducts: Number(formData.maxProducts) || null,
       }
 
       if (coupon) {
@@ -445,7 +459,7 @@ function CouponModal({ coupon, onClose, onSuccess }: any) {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Giới hạn sử dụng
+                Giới hạn sử dụng (tổng lượt)
               </label>
               <input
                 type="number"
@@ -458,7 +472,7 @@ function CouponModal({ coupon, onClose, onSuccess }: any) {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Giảm tối đa
+                Giảm tối đa (₫)
               </label>
               <input
                 type="number"
@@ -467,6 +481,34 @@ function CouponModal({ coupon, onClose, onSuccess }: any) {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 placeholder="Không giới hạn"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tối đa số đơn hàng
+              </label>
+              <input
+                type="number"
+                value={formData.maxOrders}
+                onChange={(e) => setFormData({ ...formData, maxOrders: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Không giới hạn"
+              />
+              <p className="text-xs text-gray-500 mt-1">Số đơn hàng tối đa có thể áp dụng mã này</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tối đa số xe/đơn
+              </label>
+              <input
+                type="number"
+                value={formData.maxProducts}
+                onChange={(e) => setFormData({ ...formData, maxProducts: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Áp dụng cho tất cả"
+              />
+              <p className="text-xs text-gray-500 mt-1">Để trống = áp dụng cho tất cả xe trong đơn</p>
             </div>
           </div>
 

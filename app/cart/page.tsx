@@ -303,7 +303,19 @@ export default function CartPage() {
               </div>
 
               <button
-                onClick={() => router.push('/checkout')}
+                onClick={() => {
+                  // Pass coupon data to checkout via URL params
+                  if (appliedCoupon) {
+                    const params = new URLSearchParams({
+                      couponCode: appliedCoupon.code,
+                      couponDiscount: appliedCoupon.discount.toString(),
+                      couponDescription: appliedCoupon.description || ''
+                    })
+                    router.push(`/checkout?${params.toString()}`)
+                  } else {
+                    router.push('/checkout')
+                  }
+                }}
                 className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-bold text-lg hover:from-green-700 hover:to-green-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 mb-3"
               >
                 {getText('proceedToCheckout')}

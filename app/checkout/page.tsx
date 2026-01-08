@@ -192,6 +192,28 @@ function CheckoutContent() {
   // Receipt image upload state for bank transfer
   const [receiptImage, setReceiptImage] = useState<string | null>(null)
   const [uploadingReceipt, setUploadingReceipt] = useState(false)
+  
+  // Coupon discount from cart page
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string
+    discount: number
+    description: string
+  } | null>(null)
+  
+  // Load coupon from URL params on mount
+  useEffect(() => {
+    const couponCode = searchParams.get('couponCode')
+    const couponDiscount = searchParams.get('couponDiscount')
+    const couponDescription = searchParams.get('couponDescription')
+    
+    if (couponCode && couponDiscount) {
+      setAppliedCoupon({
+        code: couponCode,
+        discount: parseFloat(couponDiscount),
+        description: couponDescription || ''
+      })
+    }
+  }, [searchParams])
 
   const { register, handleSubmit, formState: { errors }, control, watch } = useForm()
   const paymentMethod = useWatch({ control, name: 'paymentMethod' })
@@ -265,9 +287,10 @@ function CheckoutContent() {
   // Calculate totals
   const subtotal = getTotalPrice()
   const loyaltyDiscountAmount = loyaltyDiscount?.discount ? Math.round(subtotal * (loyaltyDiscount.discount / 100)) : 0
+  const couponDiscountAmount = appliedCoupon?.discount || 0
   const codFee = paymentMethod === 'cod' ? COD_FEE : 0
   const shippingFee = selectedShipping.fee
-  const totalAmount = subtotal - loyaltyDiscountAmount + codFee + shippingFee
+  const totalAmount = subtotal - loyaltyDiscountAmount - couponDiscountAmount + codFee + shippingFee
 
   // Generate order code for bank transfer
   const tempOrderCode = `DH${Date.now().toString().slice(-8)}`
@@ -381,6 +404,12 @@ function CheckoutContent() {
         },
         notes: data.notes,
         partner: partnerToken,
+        // Coupon discount info
+        couponCode: appliedCoupon?.code || null,
+        couponDiscount: appliedCoupon ? {
+          code: appliedCoupon.code,
+          amount: couponDiscountAmount
+        } : null,
         // Bank transfer receipt image
         bankTransferInfo: data.paymentMethod === 'bank_transfer' ? {
           bankName: BANK_INFO.bankName,
@@ -1071,6 +1100,23 @@ function CheckoutContent() {
                   ))}
                 </div>
 
+                {/* Applied Coupon Badge */}
+                {appliedCoupon && (
+                  <div className="mb-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Gift className="w-5 h-5 text-green-600" />
+                      <div>
+                        <p className="font-medium text-green-800">
+                          {getText('discount')}: {appliedCoupon.code}
+                        </p>
+                        <p className="text-sm text-green-600">
+                          {appliedCoupon.description || `-${formatCurrency(appliedCoupon.discount)}`}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Loyalty Discount Badge */}
                 {loyaltyDiscount && !loyaltyDiscount.isNewCustomer && (
                   <div className="mb-4 p-3 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg">
@@ -1110,6 +1156,16 @@ function CheckoutContent() {
                         {getText('loyaltyDiscount')} ({loyaltyDiscount?.discount}%)
                       </span>
                       <span className="font-semibold">-{formatCurrency(loyaltyDiscountAmount)}</span>
+                    </div>
+                  )}
+                  
+                  {couponDiscountAmount > 0 && appliedCoupon && (
+                    <div className="flex justify-between text-green-600">
+                      <span className="flex items-center gap-1">
+                        <Gift className="w-4 h-4" />
+                        {getText('discount')} ({appliedCoupon.code})
+                      </span>
+                      <span className="font-semibold">-{formatCurrency(couponDiscountAmount)}</span>
                     </div>
                   )}
                   
