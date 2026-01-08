@@ -10,6 +10,8 @@ import {
 import { expensesAPI } from '@/lib/api'
 import { formatCurrency } from '@/lib/utils'
 import toast from 'react-hot-toast'
+import { useLanguageStore } from '@/lib/store'
+import { getAdminText } from '@/lib/i18n/admin'
 
 const CATEGORY_ICONS: any = {
   electricity: Zap,
@@ -42,6 +44,8 @@ const CATEGORY_COLORS: any = {
 }
 
 export default function ExpensesPage() {
+  const { language } = useLanguageStore()
+  const t = getAdminText(language)
   const [expenses, setExpenses] = useState<any[]>([])
   const [categories, setCategories] = useState<any>({})
   const [loading, setLoading] = useState(true)

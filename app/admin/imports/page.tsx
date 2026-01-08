@@ -10,8 +10,12 @@ import {
 import { importsAPI, productsAPI } from '@/lib/api'
 import { formatCurrency } from '@/lib/utils'
 import toast from 'react-hot-toast'
+import { useLanguageStore } from '@/lib/store'
+import { getAdminText } from '@/lib/i18n/admin'
 
 export default function ImportsPage() {
+  const { language } = useLanguageStore()
+  const t = getAdminText(language)
   const [imports, setImports] = useState<any[]>([])
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -71,36 +75,36 @@ export default function ImportsPage() {
     try {
       if (selectedImport) {
         await importsAPI.update(selectedImport._id, formData)
-        toast.success('Cập nhật phiếu nhập thành công')
+        toast.success(t('saveSuccess'))
       } else {
         await importsAPI.create(formData)
-        toast.success('Tạo phiếu nhập thành công')
+        toast.success(t('saveSuccess'))
       }
       setShowModal(false)
       resetForm()
       fetchImports()
       fetchStats()
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra')
+      toast.error(error.response?.data?.message || t('error'))
     }
   }
 
   const handleUpdateStatus = async (id: string, status: string) => {
     try {
       await importsAPI.updateStatus(id, { status })
-      toast.success('Cập nhật trạng thái thành công')
+      toast.success(t('saveSuccess'))
       fetchImports()
       fetchStats()
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra')
+      toast.error(error.response?.data?.message || t('error'))
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Bạn có chắc muốn xóa phiếu nhập này?')) return
+    if (!confirm(t('confirmDelete'))) return
     try {
       await importsAPI.delete(id)
-      toast.success('Đã xóa phiếu nhập')
+      toast.success(t('deleteSuccess'))
       fetchImports()
       fetchStats()
     } catch (error: any) {
@@ -129,9 +133,9 @@ export default function ImportsPage() {
       cancelled: 'bg-red-100 text-red-800'
     }
     const labels: any = {
-      pending: 'Chờ nhận',
-      received: 'Đã nhận',
-      cancelled: 'Đã hủy'
+      pending: t('pending'),
+      received: t('completed'),
+      cancelled: t('cancelled')
     }
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status]}`}>

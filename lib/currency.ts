@@ -1,5 +1,6 @@
 /**
  * Currency Conversion System
+ * Base currency: JPY (Japanese Yen)
  * Exchange rates as of December 22, 2025
  */
 
@@ -10,76 +11,85 @@ export interface CurrencyInfo {
   symbol: string
   name: string
   flag: string
-  rate: number // Rate to VND (1 unit = X VND)
+  rate: number // Rate to JPY (1 unit = X JPY)
 }
 
 export const CURRENCIES: Record<Currency, CurrencyInfo> = {
-  VND: {
-    code: 'VND',
-    symbol: '₫',
-    name: 'Vietnamese Dong',
-    flag: '🇻🇳',
-    rate: 1
-  },
   JPY: {
     code: 'JPY',
     symbol: '¥',
     name: 'Japanese Yen',
     flag: '🇯🇵',
-    rate: 165 // 1 JPY = 165 VND
+    rate: 1 // Base currency
+  },
+  VND: {
+    code: 'VND',
+    symbol: '₫',
+    name: 'Vietnamese Dong',
+    flag: '🇻🇳',
+    rate: 0.006 // 1 VND = 0.006 JPY (165 VND = 1 JPY)
   },
   USD: {
     code: 'USD',
     symbol: '$',
     name: 'US Dollar',
     flag: '🇺🇸',
-    rate: 25000 // 1 USD = 25,000 VND
+    rate: 150 // 1 USD = 150 JPY
   },
   IDR: {
     code: 'IDR',
     symbol: 'Rp',
     name: 'Indonesian Rupiah',
     flag: '🇮🇩',
-    rate: 1.6 // 1 IDR = 1.6 VND
+    rate: 0.0097 // 1 IDR = 0.0097 JPY
   },
   BDT: {
     code: 'BDT',
     symbol: '৳',
     name: 'Bangladeshi Taka',
     flag: '🇧🇩',
-    rate: 210 // 1 BDT = 210 VND
+    rate: 1.27 // 1 BDT = 1.27 JPY
   },
   MMK: {
     code: 'MMK',
     symbol: 'K',
     name: 'Myanmar Kyat',
     flag: '🇲🇲',
-    rate: 12 // 1 MMK = 12 VND
+    rate: 0.071 // 1 MMK = 0.071 JPY
   }
 }
 
 /**
- * Convert VND to target currency
+ * Convert JPY to target currency
  */
-export const convertFromVND = (amountVND: number, targetCurrency: Currency): number => {
+export const convertFromJPY = (amountJPY: number, targetCurrency: Currency): number => {
+  if (targetCurrency === 'JPY') return amountJPY
   const rate = CURRENCIES[targetCurrency].rate
-  return amountVND / rate
+  return amountJPY / rate
 }
 
 /**
- * Convert any currency to VND
+ * Convert any currency to JPY
  */
-export const convertToVND = (amount: number, sourceCurrency: Currency): number => {
+export const convertToJPY = (amount: number, sourceCurrency: Currency): number => {
   const rate = CURRENCIES[sourceCurrency].rate
   return amount * rate
 }
 
+// Legacy functions for backward compatibility
+export const convertFromVND = convertFromJPY
+export const convertToVND = convertToJPY
+
 /**
  * Format currency with proper symbol and decimals
+ * Amount is treated as JPY by default
  */
-export const formatCurrency = (amount: number, currency: Currency): string => {
+export const formatCurrency = (amount: number, currency: Currency = 'JPY'): string => {
   const currencyInfo = CURRENCIES[currency]
-  const converted = convertFromVND(amount, currency)
+  
+  // For JPY, display the amount directly without conversion
+  // For other currencies, convert from JPY
+  const displayAmount = currency === 'JPY' ? amount : convertFromJPY(amount, currency)
   
   // Different decimal places for different currencies
   let decimals = 0
@@ -88,7 +98,7 @@ export const formatCurrency = (amount: number, currency: Currency): string => {
   else if (currency === 'BDT') decimals = 0
   else if (currency === 'VND') decimals = 0
 
-  const formatted = converted.toLocaleString('en-US', {
+  const formatted = displayAmount.toLocaleString('en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals
   })

@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export const formatCurrency = (amount: number, currency: Currency = 'VND') => {
+export const formatCurrency = (amount: number, currency: Currency = 'JPY') => {
   return formatCurrencyLib(amount, currency)
 }
 

@@ -4,15 +4,18 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Eye, Search, Filter, Download, Trash2, Edit, Printer } from 'lucide-react'
-import { useAuthStore } from '@/lib/store'
+import { useAuthStore, useLanguageStore } from '@/lib/store'
 import { ordersAPI, invoiceAPI } from '@/lib/api'
 import { formatCurrency } from '@/lib/utils'
 import AdminSidebar from '@/components/admin/Sidebar'
 import toast from 'react-hot-toast'
+import { getAdminText } from '@/lib/i18n/admin'
 
 export default function AdminOrdersPage() {
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
+  const { language } = useLanguageStore()
+  const t = getAdminText(language)
   const [orders, setOrders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -31,7 +34,7 @@ export default function AdminOrdersPage() {
       const response = await ordersAPI.getAll()
       setOrders(response.data.data)
     } catch (error) {
-      toast.error('Không thể tải danh sách đơn hàng')
+      toast.error(t('error'))
     } finally {
       setLoading(false)
     }
@@ -40,21 +43,21 @@ export default function AdminOrdersPage() {
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
       await ordersAPI.updateStatus(orderId, { orderStatus: newStatus })
-      toast.success('Đã cập nhật trạng thái đơn hàng')
+      toast.success(t('saveSuccess'))
       fetchOrders()
     } catch (error) {
-      toast.error('Không thể cập nhật trạng thái')
+      toast.error(t('saveFailed'))
     }
   }
 
   const handleDeleteOrder = async (orderId: string) => {
-    if (!confirm('Bạn có chắc muốn xóa đơn hàng này?')) return
+    if (!confirm(t('confirmDelete'))) return
     try {
       await ordersAPI.delete(orderId)
-      toast.success('Đã xóa đơn hàng')
+      toast.success(t('deleteSuccess'))
       fetchOrders()
     } catch (error) {
-      toast.error('Không thể xóa đơn hàng')
+      toast.error(t('deleteFailed'))
     }
   }
 
@@ -85,12 +88,12 @@ export default function AdminOrdersPage() {
 
   const getStatusText = (status: string) => {
     switch(status) {
-      case 'pending': return 'Chờ xác nhận'
-      case 'confirmed': return 'Đã xác nhận'
-      case 'processing': return 'Đang xử lý'
-      case 'shipping': return 'Đang giao'
-      case 'delivered': return 'Đã giao'
-      case 'cancelled': return 'Đã hủy'
+      case 'pending': return t('pending')
+      case 'confirmed': return t('completed')
+      case 'processing': return t('processing')
+      case 'shipping': return t('shipped')
+      case 'delivered': return t('delivered')
+      case 'cancelled': return t('cancelled')
       default: return status
     }
   }
@@ -100,7 +103,7 @@ export default function AdminOrdersPage() {
       <div className="flex min-h-screen bg-gray-900">
         <AdminSidebar />
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-white text-xl">Đang tải...</div>
+          <div className="text-white text-xl">{t('loading')}</div>
         </div>
       </div>
     )
@@ -114,14 +117,14 @@ export default function AdminOrdersPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-white mb-2">Quản lý đơn hàng</h1>
-              <p className="text-gray-400">Tổng số: {filteredOrders.length} đơn hàng</p>
+              <h1 className="text-3xl font-bold text-white mb-2">{t('orderManagement')}</h1>
+              <p className="text-gray-400">{t('totalOrders')}: {filteredOrders.length}</p>
             </div>
             <button
               className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
             >
               <Download className="w-5 h-5" />
-              Xuất Excel
+              {t('exportExcel')}
             </button>
           </div>
 
@@ -131,7 +134,7 @@ export default function AdminOrdersPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Tìm theo mã đơn hoặc email..."
+                  placeholder={t('search') + '...'}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
@@ -142,13 +145,13 @@ export default function AdminOrdersPage() {
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="px-4 py-3 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
               >
-                <option value="all">Tất cả trạng thái</option>
-                <option value="pending">Chờ xác nhận</option>
-                <option value="confirmed">Đã xác nhận</option>
-                <option value="processing">Đang xử lý</option>
-                <option value="shipping">Đang giao</option>
-                <option value="delivered">Đã giao</option>
-                <option value="cancelled">Đã hủy</option>
+                <option value="all">{t('all')} {t('orderStatus')}</option>
+                <option value="pending">{t('pending')}</option>
+                <option value="confirmed">{t('completed')}</option>
+                <option value="processing">{t('processing')}</option>
+                <option value="shipping">{t('shipped')}</option>
+                <option value="delivered">{t('delivered')}</option>
+                <option value="cancelled">{t('cancelled')}</option>
               </select>
             </div>
           </div>
@@ -158,13 +161,13 @@ export default function AdminOrdersPage() {
               <table className="w-full">
                 <thead className="bg-gray-700">
                   <tr>
-                    <th className="px-6 py-4 text-left text-white font-semibold">Mã đơn</th>
-                    <th className="px-6 py-4 text-left text-white font-semibold">Khách hàng</th>
-                    <th className="px-6 py-4 text-left text-white font-semibold">Sản phẩm</th>
-                    <th className="px-6 py-4 text-left text-white font-semibold">Tổng tiền</th>
-                    <th className="px-6 py-4 text-left text-white font-semibold">Trạng thái</th>
-                    <th className="px-6 py-4 text-left text-white font-semibold">Ngày đặt</th>
-                    <th className="px-6 py-4 text-right text-white font-semibold">Thao tác</th>
+                    <th className="px-6 py-4 text-left text-white font-semibold">{t('orderNumber')}</th>
+                    <th className="px-6 py-4 text-left text-white font-semibold">{t('customers')}</th>
+                    <th className="px-6 py-4 text-left text-white font-semibold">{t('products')}</th>
+                    <th className="px-6 py-4 text-left text-white font-semibold">{t('orderTotal')}</th>
+                    <th className="px-6 py-4 text-left text-white font-semibold">{t('orderStatus')}</th>
+                    <th className="px-6 py-4 text-left text-white font-semibold">{t('orderDate')}</th>
+                    <th className="px-6 py-4 text-right text-white font-semibold">{t('actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-700">
@@ -181,11 +184,11 @@ export default function AdminOrdersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-white">{order.customer?.name || 'Khách hàng'}</div>
+                        <div className="text-white">{order.customer?.name || t('customers')}</div>
                         <div className="text-gray-400 text-sm">{order.customer?.email || order.customer?.phone}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-white">{order.items?.length || 0} sản phẩm</div>
+                        <div className="text-white">{order.items?.length || 0} {t('products')}</div>
                       </td>
                       <td className="px-6 py-4 text-white font-semibold">
                         {formatCurrency(order.totalAmount || 0)}
@@ -196,12 +199,12 @@ export default function AdminOrdersPage() {
                           onChange={(e) => updateOrderStatus(order._id, e.target.value)}
                           className={`px-3 py-1 rounded-full text-sm outline-none cursor-pointer ${getStatusColor(order.orderStatus)}`}
                         >
-                          <option value="pending">Chờ xác nhận</option>
-                          <option value="confirmed">Đã xác nhận</option>
-                          <option value="processing">Đang xử lý</option>
-                          <option value="shipping">Đang giao</option>
-                          <option value="delivered">Đã giao</option>
-                          <option value="cancelled">Đã hủy</option>
+                          <option value="pending">{t('pending')}</option>
+                          <option value="confirmed">{t('completed')}</option>
+                          <option value="processing">{t('processing')}</option>
+                          <option value="shipping">{t('shipped')}</option>
+                          <option value="delivered">{t('delivered')}</option>
+                          <option value="cancelled">{t('cancelled')}</option>
                         </select>
                       </td>
                       <td className="px-6 py-4 text-gray-400 text-sm">
@@ -212,21 +215,21 @@ export default function AdminOrdersPage() {
                           <button
                             onClick={() => handlePrintInvoice(order._id)}
                             className="p-2 text-green-400 hover:bg-gray-600 rounded-lg transition-colors"
-                            title="In hóa đơn"
+                            title={t('printInvoice')}
                           >
                             <Printer className="w-5 h-5" />
                           </button>
                           <button
                             onClick={() => router.push(`/admin/orders/${order._id}`)}
                             className="p-2 text-blue-400 hover:bg-gray-600 rounded-lg transition-colors"
-                            title="Xem chi tiết"
+                            title={t('details')}
                           >
                             <Eye className="w-5 h-5" />
                           </button>
                           <button
                             onClick={() => handleDeleteOrder(order._id)}
                             className="p-2 text-red-400 hover:bg-gray-600 rounded-lg transition-colors"
-                            title="Xóa"
+                            title={t('delete')}
                           >
                             <Trash2 className="w-5 h-5" />
                           </button>
@@ -240,7 +243,7 @@ export default function AdminOrdersPage() {
 
             {filteredOrders.length === 0 && (
               <div className="text-center py-12 text-gray-400">
-                Không tìm thấy đơn hàng nào
+                {t('noResults')}
               </div>
             )}
           </div>

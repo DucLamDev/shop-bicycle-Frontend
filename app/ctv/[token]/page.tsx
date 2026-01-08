@@ -6,11 +6,12 @@ import { motion } from 'framer-motion'
 import { 
   TrendingUp, DollarSign, ShoppingCart, Copy, Check, 
   Users, Calendar, Package, CreditCard, ExternalLink,
-  BarChart3, Wallet, Clock, CheckCircle, XCircle
+  BarChart3, Wallet, Clock, CheckCircle, XCircle, QrCode, Download
 } from 'lucide-react'
 import { affiliateAPI } from '@/lib/api'
 import toast from 'react-hot-toast'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
+import { QRCodeSVG } from 'qrcode.react'
 
 interface DashboardData {
   partner: {
@@ -94,6 +95,31 @@ export default function CTVDashboardPage() {
     setCopied(true)
     toast.success(`Đã sao chép ${label}`)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const downloadQRCode = () => {
+    const svg = document.getElementById('affiliate-qr-code')
+    if (!svg) return
+    
+    const svgData = new XMLSerializer().serializeToString(svg)
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    const img = new Image()
+    
+    img.onload = () => {
+      canvas.width = img.width
+      canvas.height = img.height
+      ctx?.drawImage(img, 0, 0)
+      const pngFile = canvas.toDataURL('image/png')
+      
+      const downloadLink = document.createElement('a')
+      downloadLink.download = `affiliate-qr-${data?.partner.name || 'code'}.png`
+      downloadLink.href = pngFile
+      downloadLink.click()
+      toast.success('QRコードをダウンロードしました')
+    }
+    
+    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)))
   }
 
   const formatCurrency = (amount: number) => {
@@ -184,38 +210,70 @@ export default function CTVDashboardPage() {
             <ExternalLink className="w-5 h-5 text-purple-400" />
             アフィリエイトリンク / Link giới thiệu
           </h2>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <p className="text-sm text-gray-400 mb-2">紹介リンク</p>
-              <div className="flex items-center gap-2 bg-black/30 rounded-lg p-3">
-                <input
-                  type="text"
-                  value={data.stats.affiliateLink}
-                  readOnly
-                  className="flex-1 bg-transparent text-white text-sm outline-none"
-                />
-                <button
-                  onClick={() => copyToClipboard(data.stats.affiliateLink, 'リンク')}
-                  className="p-2 bg-purple-500 hover:bg-purple-600 rounded-lg transition-colors"
-                >
-                  {copied ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4 text-white" />}
-                </button>
-              </div>
-            </div>
-            {data.stats.discountCode && (
-              <div className="md:w-64">
-                <p className="text-sm text-gray-400 mb-2">割引コード</p>
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Link and Code Section */}
+            <div className="flex-1 space-y-4">
+              <div>
+                <p className="text-sm text-gray-400 mb-2">紹介リンク</p>
                 <div className="flex items-center gap-2 bg-black/30 rounded-lg p-3">
-                  <span className="flex-1 text-yellow-400 font-mono font-bold">{data.stats.discountCode}</span>
+                  <input
+                    type="text"
+                    value={data.stats.affiliateLink}
+                    readOnly
+                    className="flex-1 bg-transparent text-white text-sm outline-none"
+                  />
                   <button
-                    onClick={() => copyToClipboard(data.stats.discountCode!, 'コード')}
-                    className="p-2 bg-yellow-500 hover:bg-yellow-600 rounded-lg transition-colors"
+                    onClick={() => copyToClipboard(data.stats.affiliateLink, 'リンク')}
+                    className="p-2 bg-purple-500 hover:bg-purple-600 rounded-lg transition-colors"
                   >
-                    <Copy className="w-4 h-4 text-black" />
+                    {copied ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4 text-white" />}
                   </button>
                 </div>
               </div>
-            )}
+              {data.stats.discountCode && (
+                <div>
+                  <p className="text-sm text-gray-400 mb-2">割引コード</p>
+                  <div className="flex items-center gap-2 bg-black/30 rounded-lg p-3">
+                    <span className="flex-1 text-yellow-400 font-mono font-bold">{data.stats.discountCode}</span>
+                    <button
+                      onClick={() => copyToClipboard(data.stats.discountCode!, 'コード')}
+                      className="p-2 bg-yellow-500 hover:bg-yellow-600 rounded-lg transition-colors"
+                    >
+                      <Copy className="w-4 h-4 text-black" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* QR Code Section */}
+            <div className="flex flex-col items-center">
+              <p className="text-sm text-gray-400 mb-3 flex items-center gap-2">
+                <QrCode className="w-4 h-4" />
+                QRコード / Mã QR
+              </p>
+              <div className="bg-white p-4 rounded-xl shadow-lg">
+                <QRCodeSVG
+                  id="affiliate-qr-code"
+                  value={data.stats.affiliateLink}
+                  size={150}
+                  level="H"
+                  includeMargin={true}
+                  bgColor="#ffffff"
+                  fgColor="#000000"
+                />
+              </div>
+              <button
+                onClick={downloadQRCode}
+                className="mt-3 flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                <Download className="w-4 h-4" />
+                ダウンロード
+              </button>
+              <p className="text-xs text-gray-500 mt-2 text-center max-w-[180px]">
+                このQRコードをスキャンすると紹介リンクに移動します
+              </p>
+            </div>
           </div>
         </motion.div>
 

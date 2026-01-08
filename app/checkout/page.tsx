@@ -85,12 +85,14 @@ const SHIPPING_OPTIONS = [
 
 // Company bank card info for Visa/card payment
 const COMPANY_CARD_INFO = {
-  bankName: 'SMBC三井住友銀行',
-  branchName: '神戸支店',
+  bankName: 'GMOあおぞらネット銀行',
+  bankNameSearch: 'ジーエ',
+  branchName: '法人営業部',
+  branchNameSearch: 'ホウジ',
   accountType: '普通預金',
-  accountNumber: '1234567',
-  accountHolder: 'HBIKE JAPAN株式会社',
-  swiftCode: 'SMBCJPJT',
+  accountNumber: '2424682',
+  accountHolder: 'フンテイン(ト',
+  swiftCode: '',
   note: '振込手数料はお客様ご負担となります'
 }
 
@@ -724,6 +726,16 @@ function CheckoutContent() {
                     </div>
                     
                     <div className="bg-white rounded-lg p-5 shadow-sm space-y-4">
+                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 mb-4">
+                        <p className="text-sm text-blue-800 font-medium">振込手順 / Hướng dẫn chuyển khoản:</p>
+                        <ul className="text-sm text-blue-700 mt-2 space-y-1">
+                          <li>1. 銀行を検索: <span className="font-mono bg-blue-100 px-1 rounded">{COMPANY_CARD_INFO.bankNameSearch}</span> と入力</li>
+                          <li>2. 支店を検索: <span className="font-mono bg-blue-100 px-1 rounded">{COMPANY_CARD_INFO.branchNameSearch}</span> と入力 ({COMPANY_CARD_INFO.branchName})</li>
+                          <li>3. 口座番号: <span className="font-mono bg-blue-100 px-1 rounded">{COMPANY_CARD_INFO.accountNumber}</span></li>
+                          <li>4. 口座名義確認: <span className="font-mono bg-blue-100 px-1 rounded">{COMPANY_CARD_INFO.accountHolder}</span></li>
+                        </ul>
+                      </div>
+                      
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm text-gray-500">銀行名 / Ngân hàng</p>
@@ -749,11 +761,6 @@ function CheckoutContent() {
                       <div>
                         <p className="text-sm text-gray-500">口座名義 / Chủ tài khoản</p>
                         <p className="font-semibold text-gray-900">{COMPANY_CARD_INFO.accountHolder}</p>
-                      </div>
-                      
-                      <div>
-                        <p className="text-sm text-gray-500">SWIFT Code</p>
-                        <p className="font-semibold text-gray-900 font-mono">{COMPANY_CARD_INFO.swiftCode}</p>
                       </div>
                       
                       <div className="bg-purple-50 p-4 rounded-lg">
