@@ -11,7 +11,7 @@ const notoSans = Noto_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'HBike Japan - 電動アシスト自転車専門店',
+  title: 'Hung Thinh Bike',
   description: '高品質な電動アシスト自転車を販売。学生、通勤者、高齢者向けのお手頃価格の自転車',
   keywords: '電動アシスト自転車, 自転車, 日本, electric bike, bicycle',
 }

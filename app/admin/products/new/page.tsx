@@ -52,7 +52,16 @@ export default function NewProductPage() {
       battery: 3,
       motor: 3,
       discountPercent: 10
-    }
+    },
+    // Battery options for electric bikes
+    batteryOptions: [] as Array<{
+      type: string
+      name: string
+      capacity: string
+      range: number
+      priceAdjustment: number
+      inStock: boolean
+    }>
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,7 +78,8 @@ export default function NewProductPage() {
           weight: Number(formData.specifications.weight) || undefined
         },
         images: formData.images.filter(img => img.trim() !== ''),
-        replacedParts: formData.replacedParts.filter(part => part.trim() !== '')
+        replacedParts: formData.replacedParts.filter(part => part.trim() !== ''),
+        batteryOptions: formData.category === 'electric' ? formData.batteryOptions : []
       }
 
       await productsAPI.create(submitData)
@@ -110,6 +120,35 @@ export default function NewProductPage() {
     const newParts = [...formData.replacedParts]
     newParts[index] = value
     setFormData({ ...formData, replacedParts: newParts })
+  }
+
+  // Battery options management
+  const addBatteryOption = () => {
+    setFormData({
+      ...formData,
+      batteryOptions: [
+        ...formData.batteryOptions,
+        {
+          type: 'lithium_basic',
+          name: '',
+          capacity: '',
+          range: 0,
+          priceAdjustment: 0,
+          inStock: true
+        }
+      ]
+    })
+  }
+
+  const removeBatteryOption = (index: number) => {
+    const newOptions = formData.batteryOptions.filter((_, i) => i !== index)
+    setFormData({ ...formData, batteryOptions: newOptions })
+  }
+
+  const updateBatteryOption = (index: number, field: string, value: any) => {
+    const newOptions = [...formData.batteryOptions]
+    newOptions[index] = { ...newOptions[index], [field]: value }
+    setFormData({ ...formData, batteryOptions: newOptions })
   }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -485,6 +524,163 @@ export default function NewProductPage() {
                 </div>
               </div>
             </motion.div>
+
+            {/* Battery Options - Only for electric bikes */}
+            {formData.category === 'electric' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+                className="bg-gray-800 rounded-xl p-6"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-white">🔋 Loại Pin & Giá</h2>
+                    <p className="text-gray-400 text-sm mt-1">Thêm các loại pin với mức giá khác nhau (giống chọn size quần áo)</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addBatteryOption}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                  >
+                    + Thêm loại pin
+                  </button>
+                </div>
+
+                {formData.batteryOptions.length === 0 ? (
+                  <div className="text-center py-8 border-2 border-dashed border-gray-600 rounded-lg">
+                    <p className="text-gray-400 mb-2">Chưa có loại pin nào</p>
+                    <p className="text-gray-500 text-sm">Bấm "Thêm loại pin" để thêm các tùy chọn pin với giá khác nhau</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {formData.batteryOptions.map((option, index) => (
+                      <div key={index} className="bg-gray-700 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-white font-medium">Loại pin #{index + 1}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeBatteryOption(index)}
+                            className="p-1 text-red-400 hover:bg-gray-600 rounded"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1">
+                              Loại pin *
+                            </label>
+                            <select
+                              value={option.type}
+                              onChange={(e) => updateBatteryOption(index, 'type', e.target.value)}
+                              className="w-full px-3 py-2 bg-gray-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                              required
+                            >
+                              <option value="lithium_basic">Lithium Basic (36V 10Ah)</option>
+                              <option value="lithium_standard">Lithium Standard (48V 12Ah)</option>
+                              <option value="lithium_premium">Lithium Premium (48V 20Ah)</option>
+                              <option value="lead_acid">Lead Acid (Ắc quy chì)</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1">
+                              Tên loại pin *
+                            </label>
+                            <input
+                              type="text"
+                              value={option.name}
+                              onChange={(e) => updateBatteryOption(index, 'name', e.target.value)}
+                              placeholder="VD: Pin Lithium 36V 10Ah"
+                              className="w-full px-3 py-2 bg-gray-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1">
+                              Dung lượng
+                            </label>
+                            <input
+                              type="text"
+                              value={option.capacity}
+                              onChange={(e) => updateBatteryOption(index, 'capacity', e.target.value)}
+                              placeholder="VD: 36V 10Ah"
+                              className="w-full px-3 py-2 bg-gray-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1">
+                              Quãng đường (km)
+                            </label>
+                            <input
+                              type="number"
+                              value={option.range || ''}
+                              onChange={(e) => updateBatteryOption(index, 'range', Number(e.target.value))}
+                              placeholder="VD: 50"
+                              className="w-full px-3 py-2 bg-gray-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1">
+                              Chênh lệch giá (¥) *
+                            </label>
+                            <input
+                              type="number"
+                              value={option.priceAdjustment}
+                              onChange={(e) => updateBatteryOption(index, 'priceAdjustment', Number(e.target.value))}
+                              placeholder="VD: 5000 hoặc -3000"
+                              className="w-full px-3 py-2 bg-gray-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                            />
+                            <p className="text-xs text-gray-400 mt-1">
+                              0 = giá gốc, +5000 = thêm ¥5,000, -3000 = giảm ¥3,000
+                            </p>
+                          </div>
+
+                          <div className="flex items-center">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={option.inStock}
+                                onChange={(e) => updateBatteryOption(index, 'inStock', e.target.checked)}
+                                className="w-4 h-4 rounded border-gray-500 text-blue-600 focus:ring-blue-500"
+                              />
+                              <span className="text-sm text-gray-300">Còn hàng</span>
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* Price preview */}
+                        <div className="mt-3 pt-3 border-t border-gray-600">
+                          <p className="text-sm text-gray-400">
+                            Giá hiển thị: <span className="text-green-400 font-medium">
+                              ¥{((Number(formData.price) || 0) + option.priceAdjustment).toLocaleString()}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Lowest price info */}
+                    {formData.batteryOptions.length > 0 && formData.price && (
+                      <div className="bg-blue-900/30 border border-blue-500/30 rounded-lg p-4">
+                        <p className="text-blue-300 text-sm">
+                          💡 <strong>Giá hiển thị trên trang sản phẩm:</strong> ¥
+                          {Math.min(
+                            ...formData.batteryOptions.map(opt => (Number(formData.price) || 0) + opt.priceAdjustment)
+                          ).toLocaleString()}
+                          {' '}(giá thấp nhất trong các loại pin)
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            )}
 
             {/* Images */}
             <motion.div

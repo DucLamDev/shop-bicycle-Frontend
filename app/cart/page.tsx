@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Trash2, Plus, Minus, ShoppingBag, Tag, Battery, Bike } from 'lucide-react'
-import { useCartStore, useCurrencyStore, useLanguageStore } from '@/lib/store'
+import { useCartStore, useCurrencyStore, useLanguageStore, useAuthStore } from '@/lib/store'
 import { formatCurrency } from '@/lib/utils'
 import { couponsAPI } from '@/lib/api'
 
@@ -74,6 +74,8 @@ export default function CartPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null)
   const [couponLoading, setCouponLoading] = useState(false)
 
+  const { user } = useAuthStore()
+
   const handleApplyCoupon = async () => {
     if (!couponCode) return
     
@@ -83,7 +85,8 @@ export default function CartPage() {
       const response = await couponsAPI.validate({
         code: couponCode,
         orderAmount: getTotalPrice(),
-        categories
+        categories,
+        email: user?.email || ''
       })
       
       setAppliedCoupon(response.data.data)

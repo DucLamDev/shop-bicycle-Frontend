@@ -82,6 +82,8 @@ export const partnersAPI = {
     api.post('/partners', data),
   getById: (id: string) => 
     api.get(`/partners/${id}`),
+  getStats: (id: string) => 
+    api.get(`/partners/${id}/stats`),
   update: (id: string, data: any) => 
     api.put(`/partners/${id}`, data),
   delete: (id: string) => 
@@ -104,7 +106,7 @@ export const dashboardAPI = {
 export const couponsAPI = {
   getAll: () => 
     api.get('/coupons'),
-  validate: (data: { code: string; orderAmount: number; categories?: string[] }) => 
+  validate: (data: { code: string; orderAmount: number; categories?: string[]; email?: string }) => 
     api.post('/coupons/validate', data),
   create: (data: any) => 
     api.post('/coupons', data),
@@ -252,6 +254,20 @@ export const settingsAPI = {
   changePassword: (data: { currentPassword: string; newPassword: string }) => 
     api.post('/settings/change-password', data),
   backup: () => api.post('/settings/backup'),
+}
+
+export const notificationsAPI = {
+  sendEvent: (data: { 
+    title: string; 
+    description: string; 
+    image?: string;
+    startDate?: string;
+    endDate?: string;
+    couponCode?: string;
+    discount?: number;
+    targetGroup?: 'all' | 'returning' | 'new';
+  }) => api.post('/notifications/send-event', data),
+  getHistory: () => api.get('/notifications/history'),
 }
 
 export default api

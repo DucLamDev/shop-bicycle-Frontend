@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Printer, Download, Package, User, MapPin, Phone, Mail, CreditCard, Calendar, Truck, CheckCircle, Clock, XCircle } from 'lucide-react'
+import { ArrowLeft, Printer, Download, Package, User, MapPin, Phone, Mail, CreditCard, Calendar, Truck, CheckCircle, Clock, XCircle, Image as ImageIcon, Shield, AlertTriangle } from 'lucide-react'
 import { useAuthStore, useLanguageStore } from '@/lib/store'
 import { formatCurrency } from '@/lib/utils'
 import { getAdminText } from '@/lib/i18n/admin'
@@ -18,6 +18,8 @@ export default function OrderDetailPage() {
   const t = getAdminText(language)
   const [order, setOrder] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [verifyingStudentId, setVerifyingStudentId] = useState(false)
+  const [showStudentIdModal, setShowStudentIdModal] = useState(false)
   const printRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -236,6 +238,42 @@ export default function OrderDetailPage() {
       case 'shipping': return <Truck className="w-5 h-5" />
       case 'cancelled': return <XCircle className="w-5 h-5" />
       default: return <Clock className="w-5 h-5" />
+    }
+  }
+
+  // Handle student ID verification
+  const handleVerifyStudentId = async (action: 'verify' | 'reject', rejectionReason?: string) => {
+    try {
+      setVerifyingStudentId(true)
+      const token = localStorage.getItem('token')
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders/${params.id}/verify-student-id`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action, rejectionReason })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setOrder(data.data)
+        if (action === 'verify') {
+          toast.success('Đã xác minh thẻ học sinh KIJ')
+        } else {
+          toast.success('Đã từ chối thẻ học sinh và gỡ mã giảm giá KIJ')
+        }
+        setShowStudentIdModal(false)
+      } else {
+        const error = await response.json()
+        toast.error(error.message || 'Có lỗi xảy ra')
+      }
+    } catch (error) {
+      console.error('Error verifying student ID:', error)
+      toast.error('Không thể xác minh thẻ học sinh')
+    } finally {
+      setVerifyingStudentId(false)
     }
   }
 
@@ -489,10 +527,113 @@ export default function OrderDetailPage() {
                   <p className="text-gray-300">{order.notes}</p>
                 </div>
               )}
+
+              {/* Student ID Verification for KIJ Discount */}
+              {order.studentIdImage?.url && (
+                <div className="bg-[#1a1f2e] rounded-2xl p-6 border border-gray-800">
+                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <ImageIcon className="w-5 h-5" />
+                    🎓 Thẻ học sinh KIJ
+                  </h3>
+                  
+                  {/* Verification Status */}
+                  <div className="mb-4">
+                    {order.studentIdImage.verified ? (
+                      <div className="flex items-center gap-2 text-green-400 bg-green-500/10 px-3 py-2 rounded-lg">
+                        <CheckCircle className="w-5 h-5" />
+                        <span>Đã xác minh</span>
+                        {order.studentIdImage.verifiedAt && (
+                          <span className="text-xs text-gray-400 ml-2">
+                            ({new Date(order.studentIdImage.verifiedAt).toLocaleDateString('vi-VN')})
+                          </span>
+                        )}
+                      </div>
+                    ) : order.studentIdImage.rejectionReason ? (
+                      <div className="flex items-center gap-2 text-red-400 bg-red-500/10 px-3 py-2 rounded-lg">
+                        <XCircle className="w-5 h-5" />
+                        <div>
+                          <span>Đã từ chối</span>
+                          <p className="text-xs text-gray-400">{order.studentIdImage.rejectionReason}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-yellow-400 bg-yellow-500/10 px-3 py-2 rounded-lg">
+                        <AlertTriangle className="w-5 h-5" />
+                        <span>Chờ xác minh</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Student ID Image Preview */}
+                  <div 
+                    className="cursor-pointer mb-4"
+                    onClick={() => setShowStudentIdModal(true)}
+                  >
+                    <img 
+                      src={order.studentIdImage.url} 
+                      alt="Thẻ học sinh" 
+                      className="w-full max-h-48 object-contain rounded-lg border border-gray-700 hover:border-blue-500 transition-colors"
+                    />
+                    <p className="text-xs text-gray-400 mt-1 text-center">Click để xem phóng to</p>
+                  </div>
+
+                  {/* Verification Buttons */}
+                  {!order.studentIdImage.verified && !order.studentIdImage.rejectionReason && (
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => handleVerifyStudentId('verify')}
+                        disabled={verifyingStudentId}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                      >
+                        <Shield className="w-4 h-4" />
+                        {verifyingStudentId ? 'Đang xử lý...' : 'Xác minh'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          const reason = prompt('Lý do từ chối (tùy chọn):')
+                          handleVerifyStudentId('reject', reason || undefined)
+                        }}
+                        disabled={verifyingStudentId}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        {verifyingStudentId ? 'Đang xử lý...' : 'Từ chối & Gỡ giảm giá'}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Coupon Info */}
+                  {order.couponDiscount?.code && (
+                    <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                      <p className="text-blue-400 text-sm">
+                        Mã giảm giá: <strong>{order.couponDiscount.code}</strong> 
+                        {order.couponDiscount.amount > 0 && ` (-¥${order.couponDiscount.amount.toLocaleString()})`}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </motion.div>
           </div>
         </div>
       </div>
+
+      {/* Student ID Modal */}
+      {showStudentIdModal && order.studentIdImage?.url && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+          onClick={() => setShowStudentIdModal(false)}
+        >
+          <div className="max-w-4xl max-h-[90vh] overflow-auto p-4">
+            <img 
+              src={order.studentIdImage.url} 
+              alt="Thẻ học sinh" 
+              className="max-w-full max-h-full object-contain rounded-lg"
+            />
+            <p className="text-white text-center mt-4">Click bất kỳ đâu để đóng</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

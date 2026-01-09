@@ -159,7 +159,7 @@ export default function Footer() {
               <li className="flex items-start space-x-3">
                 <Mail className="w-5 h-5 text-primary-400 flex-shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  info@hungthinhbike.com
+                  bikehungthinh@gmail.com
                 </div>
               </li>
               <li className="flex items-start space-x-3">

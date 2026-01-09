@@ -168,10 +168,11 @@ function CheckoutContent() {
   const [orderId, setOrderId] = useState('')
   const [copied, setCopied] = useState(false)
   
-  // Loyalty discount state
+  // Loyalty discount state (flat 500 yen for returning customers)
   const [loyaltyDiscount, setLoyaltyDiscount] = useState<{
     isNewCustomer: boolean
     discount: number
+    discountType: 'flat' | 'percent'
     tier: string | null
     tierName: string
     message: string
@@ -192,6 +193,10 @@ function CheckoutContent() {
   // Receipt image upload state for bank transfer
   const [receiptImage, setReceiptImage] = useState<string | null>(null)
   const [uploadingReceipt, setUploadingReceipt] = useState(false)
+  
+  // Student ID image upload state for KIJ discount
+  const [studentIdImage, setStudentIdImage] = useState<string | null>(null)
+  const [uploadingStudentId, setUploadingStudentId] = useState(false)
   
   // Coupon discount from cart page
   const [appliedCoupon, setAppliedCoupon] = useState<{
@@ -286,7 +291,10 @@ function CheckoutContent() {
 
   // Calculate totals
   const subtotal = getTotalPrice()
-  const loyaltyDiscountAmount = loyaltyDiscount?.discount ? Math.round(subtotal * (loyaltyDiscount.discount / 100)) : 0
+  // Loyalty discount is now flat 500 yen for returning customers, not percentage
+  const loyaltyDiscountAmount = loyaltyDiscount && !loyaltyDiscount.isNewCustomer 
+    ? (loyaltyDiscount.discountType === 'flat' ? loyaltyDiscount.discount : Math.round(subtotal * (loyaltyDiscount.discount / 100)))
+    : 0
   const couponDiscountAmount = appliedCoupon?.discount || 0
   const codFee = paymentMethod === 'cod' ? COD_FEE : 0
   const shippingFee = selectedShipping.fee
@@ -366,6 +374,58 @@ function CheckoutContent() {
     setReceiptImage(null)
   }
 
+  // Handle student ID image upload for KIJ discount
+  const handleStudentIdUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chọn file ảnh')
+      return
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Kích thước ảnh phải nhỏ hơn 10MB')
+      return
+    }
+
+    setUploadingStudentId(true)
+    try {
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        const base64Image = reader.result as string
+        try {
+          const response = await uploadAPI.uploadReceipt(base64Image)
+          if (response.data?.url) {
+            setStudentIdImage(response.data.url)
+            toast.success('Tải ảnh thẻ học sinh thành công')
+          } else {
+            throw new Error('No URL returned')
+          }
+        } catch (uploadError) {
+          console.error('Upload to cloud failed:', uploadError)
+          setStudentIdImage(base64Image)
+          toast.success('Tải ảnh thẻ học sinh thành công')
+        }
+        setUploadingStudentId(false)
+      }
+      reader.onerror = () => {
+        setUploadingStudentId(false)
+        toast.error('Tải ảnh thất bại')
+      }
+      reader.readAsDataURL(file)
+    } catch (error) {
+      setUploadingStudentId(false)
+      toast.error('Tải ảnh thất bại')
+    }
+  }
+
+  const removeStudentIdImage = () => {
+    setStudentIdImage(null)
+  }
+
   const onSubmit = async (data: any) => {
     try {
       setLoading(true)
@@ -421,7 +481,9 @@ function CheckoutContent() {
         // Visa card receipt image
         visaCardInfo: data.paymentMethod === 'visa_card' ? {
           receiptImage: receiptImage || null
-        } : undefined
+        } : undefined,
+        // Student ID image for KIJ discount verification
+        studentIdImage: appliedCoupon?.code?.toUpperCase() === 'KIJ' ? studentIdImage : undefined
       }
 
       const response = await ordersAPI.create(orderData)
@@ -1117,6 +1179,70 @@ function CheckoutContent() {
                   </div>
                 )}
 
+                {/* Student ID Upload for KIJ Discount */}
+                {appliedCoupon && appliedCoupon.code.toUpperCase() === 'KIJ' && (
+                  <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-3">
+                      <ImageIcon className="w-5 h-5 text-blue-600" />
+                      <div>
+                        <p className="font-medium text-blue-800">
+                          📸 Upload thẻ học sinh KIJ
+                        </p>
+                        <p className="text-sm text-blue-600">
+                          Vui lòng tải lên ảnh thẻ học sinh để xác minh bạn là học sinh trường KIJ
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {!studentIdImage ? (
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors">
+                        {uploadingStudentId ? (
+                          <div className="flex items-center gap-2 text-blue-600">
+                            <span className="animate-spin">⏳</span>
+                            <span>Đang tải lên...</span>
+                          </div>
+                        ) : (
+                          <>
+                            <Upload className="w-8 h-8 text-blue-400 mb-2" />
+                            <span className="text-sm text-blue-600 font-medium">Chọn ảnh thẻ học sinh</span>
+                            <span className="text-xs text-blue-400 mt-1">PNG, JPG (max 10MB)</span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleStudentIdUpload}
+                          className="hidden"
+                          disabled={uploadingStudentId}
+                        />
+                      </label>
+                    ) : (
+                      <div className="relative">
+                        <img 
+                          src={studentIdImage} 
+                          alt="Thẻ học sinh" 
+                          className="w-full max-h-48 object-contain rounded-lg border border-blue-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={removeStudentIdImage}
+                          className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                        <div className="mt-2 flex items-center gap-2 text-green-600">
+                          <CheckCircle className="w-5 h-5" />
+                          <span className="text-sm font-medium">Đã tải lên ảnh thẻ học sinh</span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <p className="text-xs text-blue-500 mt-2">
+                      ⚠️ Quản trị viên sẽ xác minh thẻ học sinh. Nếu không hợp lệ, mã giảm giá KIJ sẽ bị gỡ bỏ.
+                    </p>
+                  </div>
+                )}
+
                 {/* Loyalty Discount Badge */}
                 {loyaltyDiscount && !loyaltyDiscount.isNewCustomer && (
                   <div className="mb-4 p-3 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg">
@@ -1124,10 +1250,10 @@ function CheckoutContent() {
                       <Crown className="w-5 h-5 text-yellow-600" />
                       <div>
                         <p className="font-medium text-yellow-800">
-                          {loyaltyDiscount.tierName}
+                          {loyaltyDiscount.tierName} - Khách hàng cũ
                         </p>
                         <p className="text-sm text-yellow-600">
-                          {getText('loyaltyDiscount')}: {loyaltyDiscount.discount}%
+                          {getText('loyaltyDiscount')}: {loyaltyDiscount.discountType === 'flat' ? `¥${loyaltyDiscount.discount}` : `${loyaltyDiscount.discount}%`}
                         </p>
                       </div>
                     </div>
@@ -1153,7 +1279,7 @@ function CheckoutContent() {
                     <div className="flex justify-between text-green-600">
                       <span className="flex items-center gap-1">
                         <Gift className="w-4 h-4" />
-                        {getText('loyaltyDiscount')} ({loyaltyDiscount?.discount}%)
+                        {getText('loyaltyDiscount')} {loyaltyDiscount?.discountType === 'flat' ? `(¥${loyaltyDiscount?.discount})` : `(${loyaltyDiscount?.discount}%)`}
                       </span>
                       <span className="font-semibold">-{formatCurrency(loyaltyDiscountAmount)}</span>
                     </div>
